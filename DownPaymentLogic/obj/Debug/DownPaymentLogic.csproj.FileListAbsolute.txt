@@ -1,0 +1,6 @@
+D:\Users\nkurdadze\Desktop\DPCorrection Code\DP Correction Main\DownPaymentCorrection\jo0urnaltest\DownPaymentLogic\bin\Debug\DownPaymentLogic.dll
+D:\Users\nkurdadze\Desktop\DPCorrection Code\DP Correction Main\DownPaymentCorrection\jo0urnaltest\DownPaymentLogic\bin\Debug\DownPaymentLogic.pdb
+D:\Users\nkurdadze\Desktop\DPCorrection Code\DP Correction Main\DownPaymentCorrection\jo0urnaltest\DownPaymentLogic\bin\Debug\SAPBusinessOneSDK.dll
+D:\Users\nkurdadze\Desktop\DPCorrection Code\DP Correction Main\DownPaymentCorrection\jo0urnaltest\DownPaymentLogic\obj\Debug\DownPaymentLogic.csprojResolveAssemblyReference.cache
+D:\Users\nkurdadze\Desktop\DPCorrection Code\DP Correction Main\DownPaymentCorrection\jo0urnaltest\DownPaymentLogic\obj\Debug\DownPaymentLogic.dll
+D:\Users\nkurdadze\Desktop\DPCorrection Code\DP Correction Main\DownPaymentCorrection\jo0urnaltest\DownPaymentLogic\obj\Debug\DownPaymentLogic.pdb

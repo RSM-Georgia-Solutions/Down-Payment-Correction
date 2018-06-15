@@ -1,0 +1,114 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{DEA4C530-2838-4A46-9288-C71AFA570719}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>jo0urnaltest</RootNamespace>
+    <AssemblyName>jo0urnaltest</AssemblyName>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject>jo0urnaltest.Program</StartupObject>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="SAPApi">
+      <HintPath>D:\Users\nkurdadze\Documents\Visual Studio 2015\Projects\RevServices_RS.GE\SAPApi\obj\Debug\SAPApi.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="SAPBusinessOneSDK" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="A_P Invoice.b1f">
+      <FormCategory>SystemForm</FormCategory>
+    </None>
+    <None Include="A_P Invoice.b1f__orig_srf">
+      <DependentUpon>A_P Invoice.b1f</DependentUpon>
+    </None>
+    <None Include="A_R Invoice.b1f">
+      <FormCategory>SystemForm</FormCategory>
+    </None>
+    <None Include="A_R Invoice.b1f__orig_srf">
+      <DependentUpon>A_R Invoice.b1f</DependentUpon>
+    </None>
+    <None Include="DownPaymentsToDrow.b1f">
+      <FormCategory>SystemForm</FormCategory>
+    </None>
+    <None Include="DownPaymentsToDrow.b1f__orig_srf">
+      <DependentUpon>DownPaymentsToDrow.b1f</DependentUpon>
+    </None>
+    <None Include="Form1.b1f">
+      <FormCategory>UserForm</FormCategory>
+    </None>
+    <Compile Include="A_P Invoice.b1f.cs">
+      <DependentUpon>A_P Invoice.b1f</DependentUpon>
+    </Compile>
+    <Compile Include="A_R Invoice.b1f.cs">
+      <DependentUpon>A_R Invoice.b1f</DependentUpon>
+    </Compile>
+    <Compile Include="DownPaymentsToDrow.b1f.cs">
+      <DependentUpon>DownPaymentsToDrow.b1f</DependentUpon>
+    </Compile>
+    <Compile Include="Form1.b1f.cs">
+      <DependentUpon>Form1.b1f</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Menu.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DownPaymentLogic\DownPaymentLogic.csproj">
+      <Project>{700d3573-f60c-4b18-8566-9411848db35e}</Project>
+      <Name>DownPaymentLogic</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

@@ -1,0 +1,3 @@
+D:\Users\nkurdadze\Desktop\DPCorrection Code\DP Correction\DownPaymentCorrection\jo0urnaltest\jo0urnaltest\bin\Debug\jo0urnaltest.exe.config
+D:\Users\nkurdadze\Desktop\DPCorrection Code\DP Correction Main\DownPaymentCorrection\jo0urnaltest\jo0urnaltest\bin\Debug\jo0urnaltest.exe.config
+C:\Users\nkurdadze\Source\Repos\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.exe.config
