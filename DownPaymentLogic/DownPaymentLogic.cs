@@ -788,7 +788,7 @@ namespace DownPaymentLogic
                 paidAmountDpLc += dif;
                 var rate = paidAmountDpLc / totalInvFc;
                 //isRateCalculated = true;
-                globalRate = Math.Round(rate, 4).ToString();
+                globalRate = Math.Round(rate, 6).ToString();
             }
         } private static void CalculateWaightedRate(DataForCalculationRate data,  
                decimal paidAmountDpLc, decimal paidAmountDpFc)
@@ -806,7 +806,7 @@ namespace DownPaymentLogic
                 var rate = paidAmountDpLc / data.TotalInv;
                 data.IsCalculated = true;
                 //isRateCalculated = true;
-                data.GlobalRate= Math.Round(rate, 4).ToString();
+                data.GlobalRate= Math.Round(rate, 6).ToString();
             }
         }
 

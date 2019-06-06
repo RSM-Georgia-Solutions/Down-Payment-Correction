@@ -1,3 +1,15 @@
 D:\Users\nkurdadze\Desktop\DPCorrection Code\DP Correction\DownPaymentCorrection\jo0urnaltest\jo0urnaltest\bin\Debug\jo0urnaltest.exe.config
 D:\Users\nkurdadze\Desktop\DPCorrection Code\DP Correction Main\DownPaymentCorrection\jo0urnaltest\jo0urnaltest\bin\Debug\jo0urnaltest.exe.config
 C:\Users\nkurdadze\Source\Repos\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.exe.config
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.exe.config
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.exe
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.pdb
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\DownPaymentLogic.dll
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\SAPApi.dll
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\SAPBusinessOneSDK.dll
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\ConverterLib_x64.dll
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\DownPaymentLogic.pdb
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\SAPApi.pdb
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.csprojResolveAssemblyReference.cache
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.exe
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.pdb
