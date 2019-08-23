@@ -59,6 +59,20 @@ namespace DownPaymentLogic
                     // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრუტლი თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
 
                     List<Tuple<int, decimal, decimal>> sumPayments = new List<Tuple<int, decimal, decimal>>();
+
+
+                    if (recSet2.EoF)
+                    {
+                        recSet2.DoQuery($"SELECT BaseRef FROM DPI1 WHERE DocEntry = '{dpDocEntry}'");
+                        dpDocEntry = recSet2.Fields.Item("BaseRef").Value.ToString();
+
+                        ORCTDocEntrys =
+                            "select ORCT.DocEntry from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where RCT2.DocEntry = '" +
+                            dpDocEntry + "' and InvType = 203 and ORCT.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
+                        recSet2.DoQuery("select ORCT.DocEntry, avg(ORCT.TrsfrSum) as 'TrsfrSum' , SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
+                                        "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + ORCTDocEntrys + ") group by ORCT.DocEntry");
+                    }
+
                     while (!recSet2.EoF)
                     {
                         int OCRTDocEntry = int.Parse(recSet2.Fields.Item("DocEntry").Value.ToString());
@@ -214,6 +228,20 @@ namespace DownPaymentLogic
                     recSet2.DoQuery("select OVPM.DocEntry, avg(OVPM.TrsfrSum) as 'TrsfrSum' , SUM(VPM2.AppliedFC) as 'AppliedFC' from OVPM inner join VPM2 on " +
                                     "OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (" + ORCTDocEntrys + ") group by OVPM.DocEntry");
                     // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრუტლი თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
+
+                    if (recSet2.EoF)
+                    {
+                        recSet2.DoQuery($"SELECT BaseRef FROM DPO1 WHERE DocEntry = '{dpDocEntry}'");
+                        dpDocEntry = recSet2.Fields.Item("BaseRef").Value.ToString();
+
+                        ORCTDocEntrys =
+                            $"select OVPM.DocEntry from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where VPM2.DocEntry = '{dpDocEntry}' and InvType = 204 and OVPM.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
+                        recSet2.DoQuery("select OVPM.DocEntry, avg(OVPM.TrsfrSum) as 'TrsfrSum' , SUM(VPM2.AppliedFC) as 'AppliedFC' from OVPM inner join VPM2 on " +
+                                        "OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (" + ORCTDocEntrys + ") group by OVPM.DocEntry");
+                    }
+
+                      
+
 
                     List<Tuple<int, decimal, decimal>> sumPayments = new List<Tuple<int, decimal, decimal>>();
                     while (!recSet2.EoF)
