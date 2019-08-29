@@ -24,21 +24,21 @@ namespace DownPaymentLogic
         /// <param name="isRateCalculated"> tu isRateCalculated true daabruna eseigi invoisis BP Currency velshi  unda cahvsvat  globalRate </param>
         /// <param name="globalRate"> tu isRateCalculated true daabruna eseigi invoisis BP Currency velshi  unda cahvsvat  globalRate </param>
         /// <param name="ratInv">invoisis(mshobeli) formis valuta </param>
-        public static void ExchangeRateCorrectionUi(DataForCalculationRate data ,   SAPbobsCOM.Company _comp)
-            
-            //Form downPaymentToDrow, SAPbobsCOM.Company _comp, string formType,
-            //string docCurrency, decimal totalInv,    out string globalRate, decimal ratInv)
+        public static void ExchangeRateCorrectionUi(DataForCalculationRate data, SAPbobsCOM.Company _comp)
+
+        //Form downPaymentToDrow, SAPbobsCOM.Company _comp, string formType,
+        //string docCurrency, decimal totalInv,    out string globalRate, decimal ratInv)
         {
             //isRateCalculated = false;
             //Form downPaymentToDrowForm = downPaymentToDrow;
             //Item downPaymentFormMatrix = downPaymentToDrowForm.Items.Item("6"); //Down Payment to drow
             //Matrix matrix = (SAPbouiCOM.Matrix)downPaymentFormMatrix.Specific;
-           data.GlobalRate= "1,0000";
+            data.GlobalRate = "1,0000";
 
             decimal paidAmountDpLc = 0m; // A/R DownPayment - ში არჩეული თანხა ლოკალურ ვალუტაში //Net AmountFC To Drow * Rate
             decimal paidAmountDpFc = 0m; //  A/R DownPayment - ში არჩეული თანხა FC //Net AmountFC To Drow 
 
-            foreach (var downpayment in data.NetAmountsForDownPayment)
+            foreach (var downpayment in data.GrossAmountsForDownPayment)
             {
                 if (data.FormTypex == "133")
                 {
@@ -96,14 +96,14 @@ namespace DownPaymentLogic
                         docEntrysJounralEntrys += recSetLast.Fields.Item("DocEntry").Value + ",";
                         recSetLast.MoveNext();
                     }
-                     docEntrysJounralEntrys = docEntrysJounralEntrys.Remove(docEntrysJounralEntrys.Length - 1, 1);
+                    docEntrysJounralEntrys = docEntrysJounralEntrys.Remove(docEntrysJounralEntrys.Length - 1, 1);
 
 
                     //აქ გვაქვს  ლოკალულ ვალუტაში გატარებილი დოკუმენტების ჯამი და ნომერი რომელიც უნდა გამოაკლდეს გადახდის სრულ თანხას LC- ში
 
                     Recordset recSet4 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                     recSet4.DoQuery(
-                        "select DocEntry, SUM(LcPrices) as SumLCPayments from ( select  ORCT.DocEntry as 'DocEntry',  SUM(case when AppliedFC = 0 and RCT2.DocEntry not in ("+ docEntrysJounralEntrys + ") then RCT2.SumApplied else 0 end ) as 'LcPrices' from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" +
+                        "select DocEntry, SUM(LcPrices) as SumLCPayments from ( select  ORCT.DocEntry as 'DocEntry',  SUM(case when AppliedFC = 0 and RCT2.DocEntry not in (" + docEntrysJounralEntrys + ") then RCT2.SumApplied else 0 end ) as 'LcPrices' from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" +
                         ORCTDocEntrys +
                         ") group by  RCT2.SumApplied , ORCT.DocEntry ) LcPricesTable group by DocEntry");
 
@@ -213,7 +213,7 @@ namespace DownPaymentLogic
                 }
                 else
                 {
-                     
+
 
                     Recordset recSet2 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                     recSet2.DoQuery("SELECT DocEntry FROM ODPO WHERE DocNum = '" + downpayment.First().Key + "'");
@@ -240,7 +240,7 @@ namespace DownPaymentLogic
                                         "OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (" + ORCTDocEntrys + ") group by OVPM.DocEntry");
                     }
 
-                      
+
 
 
                     List<Tuple<int, decimal, decimal>> sumPayments = new List<Tuple<int, decimal, decimal>>();
@@ -425,7 +425,7 @@ namespace DownPaymentLogic
                     SAPbouiCOM.Framework.Application.SBO_Application.Forms.ActiveForm.Close();
                 }
             }
-        //}
+            //}
 
 
             //}
@@ -795,7 +795,7 @@ namespace DownPaymentLogic
 
             //}
 
-            CalculateWaightedRate(data,  paidAmountDpLc, paidAmountDpFc);
+            CalculateWaightedRate(data, paidAmountDpLc, paidAmountDpFc);
 
 
 
@@ -818,23 +818,24 @@ namespace DownPaymentLogic
                 //isRateCalculated = true;
                 globalRate = Math.Round(rate, 6).ToString();
             }
-        } private static void CalculateWaightedRate(DataForCalculationRate data,  
-               decimal paidAmountDpLc, decimal paidAmountDpFc)
+        }
+        private static void CalculateWaightedRate(DataForCalculationRate data,
+             decimal paidAmountDpLc, decimal paidAmountDpFc)
         {
             if (data.TotalInv == paidAmountDpFc)
             {
                 var rate = paidAmountDpLc / data.TotalInv;
-               data.GlobalRate = rate.ToString();
+                data.GlobalRate = rate.ToString();
                 data.IsCalculated = true;
             }
-            else if (data.TotalInv> paidAmountDpFc)
+            else if (data.TotalInv > paidAmountDpFc)
             {
-                var dif = (data.TotalInv - paidAmountDpFc) *  data.RateInv; //invocie Open AmountFC
+                var dif = (data.TotalInv - paidAmountDpFc) * data.RateInv; //invocie Open AmountFC
                 paidAmountDpLc += dif;
                 var rate = paidAmountDpLc / data.TotalInv;
                 data.IsCalculated = true;
                 //isRateCalculated = true;
-                data.GlobalRate= Math.Round(rate, 6).ToString();
+                data.GlobalRate = Math.Round(rate, 6).ToString();
             }
         }
 
@@ -888,7 +889,7 @@ namespace DownPaymentLogic
             else
             {
                 string ORCTDocEntrys = string.Empty;
-                Recordset recSet2 = (Recordset) _comp.GetBusinessObject(BoObjectTypes.BoRecordset);
+                Recordset recSet2 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                 ORCTDocEntrys =
                     "select ORCT.DocEntry from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where RCT2.DocEntry = '" +
                     downPaymentDocEntry +
@@ -921,7 +922,7 @@ namespace DownPaymentLogic
 
                 //აქ გვაქვს  ლოკალულ ვალუტაში გატარებილი დოკუმენტების ჯამი და ნომერი რომელიც უნდა გამოაკლდეს გადახდის სრულ თანხას LC- ში
 
-                Recordset recSet4 = (Recordset) _comp.GetBusinessObject(BoObjectTypes.BoRecordset);
+                Recordset recSet4 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                 recSet4.DoQuery(
                     "select DocEntry, SUM(LcPrices) as SumLCPayments from ( select  ORCT.DocEntry as 'DocEntry',  SUM(case when AppliedFC = 0 then RCT2.SumApplied else 0 end ) as 'LcPrices' from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" +
                     ORCTDocEntrys +
@@ -969,7 +970,7 @@ namespace DownPaymentLogic
 
                 //}
 
-                Recordset recSet3 = (Recordset) _comp.GetBusinessObject(BoObjectTypes.BoRecordset);
+                Recordset recSet3 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                 recSet3.DoQuery(
                     "select ORCT.DocEntry, RCT2.DocEntry as 'DpDocEntry',    RCT2.AppliedFC from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry  in ( " +
                     ORCTDocEntrys + ") and RCT2.DocEntry = '" + downPaymentDocEntry + "' and InvType = 203");
@@ -1027,6 +1028,7 @@ namespace DownPaymentLogic
             vJE.Reference = reference;
             vJE.TransactionCode = "1";
             vJE.Series = series;
+
             vJE.Lines.BPLID = BPLID; //branch
             vJE.Lines.Debit = amount;
             vJE.Lines.Credit = 0;
@@ -1034,6 +1036,7 @@ namespace DownPaymentLogic
             vJE.Lines.FCCredit = 0;
             vJE.Lines.FCDebit = 0;
             vJE.Lines.Add();
+
             vJE.Lines.BPLID = BPLID;
             vJE.Lines.ControlAccount = creditCode;
             vJE.Lines.ShortName = code;
@@ -1041,8 +1044,8 @@ namespace DownPaymentLogic
             vJE.Lines.Credit = amount;
             vJE.Lines.FCCredit = 0;
             vJE.Lines.FCDebit = 0;
-
             vJE.Lines.Add();
+
             int i = vJE.Add();
             if (i == 0)
             {
@@ -1106,12 +1109,63 @@ namespace DownPaymentLogic
             {141, "18"}
         };
 
-        public static void CorrectionJournalEntryUI(SAPbobsCOM.Company _comp, int FormType, string businesPartnerCardCode, string apllaidDp, string docNumber, string bplName, string ExchangeGain, string ExchangeLoss, DateTime docDate)
+        public static void CorrectionJournalEntryUI(SAPbobsCOM.Company _comp, int FormType, string businesPartnerCardCode, string applied, string docNumber, string bplName, string ExchangeGain, string ExchangeLoss, DateTime docDate)
         {
+
+            string vatAccountDownPayment = string.Empty; 
+            string vatGroup = string.Empty;
+            decimal vatDifferenceBetweenDpmInv = 0;
+            decimal vatAmountInvDpm = 0;
+            decimal exchangeRateAmount = 0;
+            decimal invTransitAmount = 0;
+            decimal correctionAmount = 0;
             Recordset recSet = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
+            Recordset recSetNew = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
+            Recordset recSetJdt = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
+            Recordset recSetDeter = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
+
+            recSetDeter.DoQuery($"select * from OACP where Year(OACP.FinancYear) =  {DateTime.Now.Year}");
+            string transitAccount = recSetDeter.Fields.Item("PurcVatOff").Value.ToString();
+
+
+            recSetNew.DoQuery($"select * from PCH9 where DocEntry = {docNumber}");
+            var dpm = recSetNew.Fields.Item("BaseAbs").Value.ToString();
+            recSetNew.DoQuery($"SELECT transid FROM ODPO WHERE DocEntry = {dpm}");
+            var transid = recSetNew.Fields.Item("transid").Value;
+            decimal drFc = 0;
+            decimal dr = 0;
+            decimal cr = 0;
+            decimal crFc = 0;
+            if (transid != null && transid.ToString() != "0")
+            {
+
+                recSetJdt.DoQuery($"SELECT * FROM JDT1 WHERE TransId = {transid}");
+                while (!recSetJdt.EoF)
+                {
+
+                    if (recSetJdt.Fields.Item("Account").Value.ToString() == transitAccount)
+                    {
+                        recSetJdt.MoveNext();
+                    }
+                    else
+                    {
+                        dr = decimal.Parse(recSetJdt.Fields.Item("Debit").Value.ToString());
+                        drFc = decimal.Parse(recSetJdt.Fields.Item("FCDebit").Value.ToString());
+                        cr = decimal.Parse(recSetJdt.Fields.Item("Credit").Value.ToString());
+                        crFc = decimal.Parse(recSetJdt.Fields.Item("FCCredit").Value.ToString());
+                        vatAccountDownPayment = recSetJdt.Fields.Item("Account").Value.ToString();
+                        vatGroup = recSetJdt.Fields.Item("VatGroup").Value.ToString();
+                        break;
+                    }
+                }
+            }
+
+            decimal vatAmountDownPayment = dr + cr;
+            decimal vatAmountDownPaymentFc = drFc + crFc;
+
             recSet.DoQuery("select DebPayAcct from OCRD where CardCode = '" + businesPartnerCardCode + "'");
             string BpControlAcc = recSet.Fields.Item("DebPayAcct").Value.ToString();
-            if (!string.IsNullOrWhiteSpace(apllaidDp))
+            if (!string.IsNullOrWhiteSpace(applied))
             {
                 var objRS = (SAPbobsCOM.Recordset)(_comp).GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
                 objRS.DoQuery(@"select * from OJDT where baseRef = " + docNumber + " and TransType = " +
@@ -1129,14 +1183,55 @@ namespace DownPaymentLogic
 
                 if (objRS.Fields.Item("TransType").Value.ToString() != "13")
                 {
-                    objRS234.DoQuery("select  BPLId from OPCH where BPLName = '" + bplName + "'");
+                    objRS234.DoQuery("select  BPLId from OPCH where BPLName = N'" + bplName + "'");
                 }
                 else if (objRS.Fields.Item("TransType").Value.ToString() != "18")
                 {
-                    objRS234.DoQuery("select  BPLId from OINV where BPLName = '" + bplName + "'");
+                    objRS234.DoQuery("select  BPLId from OINV where BPLName = N'" + bplName + "'");
                 }
 
                 int bplID = Convert.ToInt32(objRS234.Fields.Item("BPLId").Value);
+
+
+                while (!objRS.EoF && transid != null && transid.ToString() != "0")
+                {
+                    bool difCalculated = false;
+                    bool exchangeRateCalculated = false;
+                    bool transitCalculated = false;
+                    string invAcc = objRS.Fields.Item("Account").Value.ToString();
+                    string invvatGroup = objRS.Fields.Item("VatGroup").Value.ToString();
+                    decimal invCreditFc = decimal.Parse(objRS.Fields.Item("FCCredit").Value.ToString());
+                    decimal invCredit = decimal.Parse(objRS.Fields.Item("Credit").Value.ToString());
+                    decimal invDebit = decimal.Parse(objRS.Fields.Item("Debit").Value.ToString());
+          
+
+                    if (invAcc == vatAccountDownPayment && invvatGroup == vatGroup && invCreditFc == vatAmountDownPaymentFc)
+                    {
+                        vatAmountInvDpm = invCredit + invDebit;
+                        difCalculated = true;
+                    }
+                    if (invAcc == ExchangeGain || invAcc == ExchangeLoss)
+                    {
+                        exchangeRateAmount = invCredit + invDebit;
+                        exchangeRateCalculated = true;
+                    }
+
+                    if (invAcc == transitAccount)
+                    {
+                        invTransitAmount = invDebit + invCredit;
+                        transitCalculated = true;
+                    }
+                    if (exchangeRateCalculated && difCalculated && transitCalculated)
+                    {
+                        break;
+                    }
+                    objRS.MoveNext();
+                }
+
+                  vatDifferenceBetweenDpmInv = invTransitAmount - vatAmountInvDpm;
+                  correctionAmount = exchangeRateAmount - vatDifferenceBetweenDpmInv;
+
+
 
                 Recordset recSet12 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                 recSet12.DoQuery("select Series from NNM1 where ObjectCode = 30 and Locked = 'N' and BPLId is  null");
@@ -1153,32 +1248,70 @@ namespace DownPaymentLogic
 
                     if (FormType.ToString() == "133")
                     {
-                        if (account == ExchangeGain)
+                        if (transid != null && transid.ToString() != "0")
                         {
-                            AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
-                                Convert.ToDouble(objRS.Fields.Item("Credit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate,
-                                bplID);
+                             if (account == ExchangeGain)
+                            {
+                                AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
+                                    Convert.ToDouble(objRS.Fields.Item("Credit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate,
+                                    bplID);
 
+                            }
+                            else if (account == ExchangeLoss)
+                            {
+                                AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
+                                    Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
+                            }
                         }
-                        else if (account == ExchangeLoss)
+                        else
                         {
-                            AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
-                                Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
+                            if (account == ExchangeGain)
+                            {
+                                AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
+                                    Convert.ToDouble(objRS.Fields.Item("Credit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate,
+                                    bplID);
+
+                            }
+                            else if (account == ExchangeLoss)
+                            {
+                                AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
+                                    Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
+                            }
                         }
+                       
                     }
                     else if (FormType.ToString() == "141")
                     {
-                        if (account == ExchangeGain)
+                        if (transid != null && transid.ToString() != "0")
                         {
-                            AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
-                                Convert.ToDouble(objRS.Fields.Item("Credit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate,
-                                bplID);
+                            if (account == ExchangeGain)
+                            {
+                                AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
+                                    Convert.ToDouble(exchangeRateAmount), series, docNumber, businesPartnerCardCode, docDate,
+                                    bplID);
+
+                            }
+                            else if (account == ExchangeLoss)
+                            {
+                                AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
+                                   Convert.ToDouble(exchangeRateAmount), series, docNumber, businesPartnerCardCode, docDate, bplID);
+                            }
                         }
-                        else if (account == ExchangeLoss)
+                        else
                         {
-                            AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
-                                Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
+                            if (account == ExchangeGain)
+                            {
+                                AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
+                                    Convert.ToDouble(objRS.Fields.Item("Credit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate,
+                                    bplID);
+                            }
+                            else if (account == ExchangeLoss)
+                            {
+                                AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
+                                    Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
+                            }
                         }
+                      
                     }
 
                     objRS.MoveNext();

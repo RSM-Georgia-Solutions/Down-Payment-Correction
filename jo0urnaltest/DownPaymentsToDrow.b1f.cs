@@ -70,6 +70,7 @@ namespace jo0urnaltest
                 Matrix matrix = (SAPbouiCOM.Matrix)downPaymentFormMatrix.Specific;
 
                 List<Dictionary<string, string>> downPaymentDocEntryNetAmount = new List<Dictionary<string, string>>();
+                List<Dictionary<string, string>> downPaymentDocEntryGrossAmount = new List<Dictionary<string, string>>();
 
                 for (int i = 1; i <= matrix.RowCount; i++)
                 {
@@ -77,11 +78,16 @@ namespace jo0urnaltest
                     if (checkbox.Checked)
                     {
                         EditText txtMoney = (SAPbouiCOM.EditText)matrix.Columns.Item("29").Cells.Item(i).Specific; //net amount to drow//
+                        EditText txtMoneyGross = (SAPbouiCOM.EditText)matrix.Columns.Item("380000124").Cells.Item(i).Specific; //net amount to drow//
                         EditText txtID = (SAPbouiCOM.EditText)matrix.Columns.Item("68").Cells.Item(i).Specific; //docNumber
 
                         downPaymentDocEntryNetAmount.Add(new Dictionary<string, string>
                         { 
                             {txtID.Value, txtMoney.Value.Split(' ')[0]}
+                        });
+                        downPaymentDocEntryGrossAmount.Add(new Dictionary<string, string>
+                        {
+                            {txtID.Value, txtMoneyGross.Value.Split(' ')[0]}
                         });
                     }
                 }
@@ -91,6 +97,8 @@ namespace jo0urnaltest
                 {
                     var formCouples = SharedClass.ListOfDataForCalculationRates.First(x => x.FormUIdDps == downPaymentToDrowForm.UDFFormUID);
                     formCouples.NetAmountsForDownPayment = downPaymentDocEntryNetAmount;
+                    formCouples.GrossAmountsForDownPayment = downPaymentDocEntryGrossAmount;
+
                 }
                 catch (Exception e)
                 {

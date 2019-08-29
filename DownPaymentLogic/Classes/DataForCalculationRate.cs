@@ -23,6 +23,7 @@ namespace DownPaymentLogic.Classes
         public string GlobalRate { get; set; }
         public bool IsCalculated { get; set; }
         public List<Dictionary<string, string>> NetAmountsForDownPayment { get; set; }
-        
+        public List<Dictionary<string, string>> GrossAmountsForDownPayment { get; set; }
+
     }
 }
