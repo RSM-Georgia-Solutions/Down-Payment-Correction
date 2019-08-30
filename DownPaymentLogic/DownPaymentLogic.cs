@@ -1013,7 +1013,7 @@ namespace DownPaymentLogic
         }
 
         public static void AddJournalEntryCredit(SAPbobsCOM.Company _comp, string creditCode, string debitCode,
-            double amount, int series, string reference, string code, DateTime DocDate, int BPLID = 235)
+            double amount, int series, string reference, string code, DateTime DocDate, int BPLID = 235, string vatAccount = "", double vatAmount = 0, string vatGroup = "")
         {
 
             SAPbobsCOM.JournalEntries vJE =
@@ -1046,6 +1046,26 @@ namespace DownPaymentLogic
             vJE.Lines.FCDebit = 0;
             vJE.Lines.Add();
 
+            if (vatGroup != "")
+            {
+                vJE.Lines.BPLID = BPLID;
+                vJE.Lines.AccountCode = debitCode;
+                vJE.Lines.Debit = 0;
+                vJE.Lines.Credit = vatAmount;
+                vJE.Lines.FCCredit = 0;
+                vJE.Lines.FCDebit = 0;
+                vJE.Lines.Add();
+
+                vJE.Lines.BPLID = BPLID;
+                vJE.Lines.AccountCode = vatAccount;
+                vJE.Lines.TaxGroup = vatGroup;
+                vJE.Lines.Debit = vatAmount;
+                vJE.Lines.Credit = 0;
+                vJE.Lines.FCCredit = 0;
+                vJE.Lines.FCDebit = 0;
+                vJE.Lines.Add();
+            }
+
             int i = vJE.Add();
             if (i == 0)
             {
@@ -1059,7 +1079,7 @@ namespace DownPaymentLogic
         }
 
         public static void AddJournalEntryDebit(SAPbobsCOM.Company _comp, string creditCode, string debitCode,
-            double amount, int series, string reference, string code, DateTime DocDate, int BPLID = 235)
+            double amount, int series, string reference, string code, DateTime DocDate, int BPLID = 235, string vatAccount = "", double vatAmount = 0, string vatGroup = "")
         {
 
             SAPbobsCOM.JournalEntries vJE =
@@ -1088,7 +1108,26 @@ namespace DownPaymentLogic
             vJE.Lines.FCCredit = 0;
             vJE.Lines.FCDebit = 0;
             // vJE.Series = 17;
+            vJE.Lines.Add();
+            if (vatGroup != "")
+            {
+                vJE.Lines.BPLID = BPLID;
+                vJE.Lines.AccountCode = creditCode;
+                vJE.Lines.Debit = vatAmount;
+                vJE.Lines.Credit = 0;
+                vJE.Lines.FCCredit = 0;
+                vJE.Lines.FCDebit = 0;
+                vJE.Lines.Add();
 
+                vJE.Lines.BPLID = BPLID;
+                vJE.Lines.AccountCode = vatAccount;
+                vJE.Lines.TaxGroup = vatGroup;
+                vJE.Lines.Debit = 0;
+                vJE.Lines.Credit = vatAmount;
+                vJE.Lines.FCCredit = 0;
+                vJE.Lines.FCDebit = 0;
+                vJE.Lines.Add();
+            }
 
             vJE.Lines.Add();
             int i = vJE.Add();
@@ -1112,7 +1151,7 @@ namespace DownPaymentLogic
         public static void CorrectionJournalEntryUI(SAPbobsCOM.Company _comp, int FormType, string businesPartnerCardCode, string applied, string docNumber, string bplName, string ExchangeGain, string ExchangeLoss, DateTime docDate)
         {
 
-            string vatAccountDownPayment = string.Empty; 
+            string vatAccountDownPayment = string.Empty;
             string vatGroup = string.Empty;
             decimal vatDifferenceBetweenDpmInv = 0;
             decimal vatAmountInvDpm = 0;
@@ -1203,9 +1242,9 @@ namespace DownPaymentLogic
                     decimal invCreditFc = decimal.Parse(objRS.Fields.Item("FCCredit").Value.ToString());
                     decimal invCredit = decimal.Parse(objRS.Fields.Item("Credit").Value.ToString());
                     decimal invDebit = decimal.Parse(objRS.Fields.Item("Debit").Value.ToString());
-          
 
-                    if (invAcc == vatAccountDownPayment && invvatGroup == vatGroup && invCreditFc == vatAmountDownPaymentFc)
+
+                    if (invAcc == vatAccountDownPayment && invvatGroup == vatGroup && Math.Abs(invCreditFc) == vatAmountDownPaymentFc)
                     {
                         vatAmountInvDpm = invCredit + invDebit;
                         difCalculated = true;
@@ -1228,8 +1267,8 @@ namespace DownPaymentLogic
                     objRS.MoveNext();
                 }
 
-                  vatDifferenceBetweenDpmInv = invTransitAmount - vatAmountInvDpm;
-                  correctionAmount = exchangeRateAmount - vatDifferenceBetweenDpmInv;
+                vatDifferenceBetweenDpmInv = invTransitAmount - vatAmountInvDpm;
+                correctionAmount = exchangeRateAmount - vatDifferenceBetweenDpmInv;
 
 
 
@@ -1242,6 +1281,7 @@ namespace DownPaymentLogic
                     bplID = 235;
                 }
 
+                objRS.MoveFirst();
                 while (!objRS.EoF)
                 {
                     var account = objRS.Fields.Item("Account").Value.ToString();
@@ -1250,17 +1290,17 @@ namespace DownPaymentLogic
                     {
                         if (transid != null && transid.ToString() != "0")
                         {
-                             if (account == ExchangeGain)
+                            if (account == ExchangeGain)
                             {
                                 AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
                                     Convert.ToDouble(objRS.Fields.Item("Credit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate,
-                                    bplID);
+                                    bplID, vatAccountDownPayment, Convert.ToDouble(correctionAmount), vatGroup);
 
                             }
                             else if (account == ExchangeLoss)
                             {
                                 AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
-                                    Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
+                                    Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID, vatAccountDownPayment, Convert.ToDouble(correctionAmount), vatGroup);
                             }
                         }
                         else
@@ -1278,7 +1318,7 @@ namespace DownPaymentLogic
                                     Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
                             }
                         }
-                       
+
                     }
                     else if (FormType.ToString() == "141")
                     {
@@ -1287,14 +1327,14 @@ namespace DownPaymentLogic
                             if (account == ExchangeGain)
                             {
                                 AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
-                                    Convert.ToDouble(exchangeRateAmount), series, docNumber, businesPartnerCardCode, docDate,
-                                    bplID);
+                                    Convert.ToDouble(correctionAmount), series, docNumber, businesPartnerCardCode, docDate,
+                                    bplID, vatAccountDownPayment, Convert.ToDouble(correctionAmount - exchangeRateAmount), vatGroup);
 
                             }
                             else if (account == ExchangeLoss)
                             {
                                 AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
-                                   Convert.ToDouble(exchangeRateAmount), series, docNumber, businesPartnerCardCode, docDate, bplID);
+                                   Convert.ToDouble(vatDifferenceBetweenDpmInv + exchangeRateAmount), series, docNumber, businesPartnerCardCode, docDate, bplID, vatAccountDownPayment, Convert.ToDouble(vatDifferenceBetweenDpmInv), vatGroup);
                             }
                         }
                         else
@@ -1311,7 +1351,7 @@ namespace DownPaymentLogic
                                     Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
                             }
                         }
-                      
+
                     }
 
                     objRS.MoveNext();
