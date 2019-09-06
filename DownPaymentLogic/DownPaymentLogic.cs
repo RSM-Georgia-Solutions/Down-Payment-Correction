@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using DownPaymentLogic.Classes;
 using SAPbobsCOM;
 using SAPbouiCOM;
+using Application = SAPbouiCOM.Framework.Application;
 
 namespace DownPaymentLogic
 {
@@ -25,16 +27,8 @@ namespace DownPaymentLogic
         /// <param name="globalRate"> tu isRateCalculated true daabruna eseigi invoisis BP Currency velshi  unda cahvsvat  globalRate </param>
         /// <param name="ratInv">invoisis(mshobeli) formis valuta </param>
         public static void ExchangeRateCorrectionUi(DataForCalculationRate data, SAPbobsCOM.Company _comp)
-
-        //Form downPaymentToDrow, SAPbobsCOM.Company _comp, string formType,
-        //string docCurrency, decimal totalInv,    out string globalRate, decimal ratInv)
         {
-            //isRateCalculated = false;
-            //Form downPaymentToDrowForm = downPaymentToDrow;
-            //Item downPaymentFormMatrix = downPaymentToDrowForm.Items.Item("6"); //Down Payment to drow
-            //Matrix matrix = (SAPbouiCOM.Matrix)downPaymentFormMatrix.Specific;
             data.GlobalRate = "1,0000";
-
             decimal paidAmountDpLc = 0m; // A/R DownPayment - ში არჩეული თანხა ლოკალურ ვალუტაში //Net AmountFC To Drow * Rate
             decimal paidAmountDpFc = 0m; //  A/R DownPayment - ში არჩეული თანხა FC //Net AmountFC To Drow 
 
@@ -42,82 +36,56 @@ namespace DownPaymentLogic
             {
                 if (data.FormTypex == "133")
                 {
-                    //string ORCTDocEntrys = string.Empty;
-
                     Recordset recSet2 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                     recSet2.DoQuery("SELECT DocEntry FROM ODPI WHERE DocNum = '" + downpayment.First().Key + "'");
                     var dpDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
 
-                    string ORCTDocEntrys =
+                    string orctDocEntrys =
                         "select ORCT.DocEntry from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where RCT2.DocEntry = '" +
-                        dpDocEntry + "' and InvType = 203 and ORCT.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
-
-
+                        dpDocEntry + "' and InvType = 203 and ORCT.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები 
 
                     recSet2.DoQuery("select ORCT.DocEntry, avg(ORCT.TrsfrSum) as 'TrsfrSum' , SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
-                        "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + ORCTDocEntrys + ") group by ORCT.DocEntry");
+                                    "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + orctDocEntrys + ") group by ORCT.DocEntry");
                     // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრუტლი თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
-
-                    List<Tuple<int, decimal, decimal>> sumPayments = new List<Tuple<int, decimal, decimal>>();
-
 
                     if (recSet2.EoF)
                     {
                         recSet2.DoQuery($"SELECT BaseRef FROM DPI1 WHERE DocEntry = '{dpDocEntry}'");
                         dpDocEntry = recSet2.Fields.Item("BaseRef").Value.ToString();
 
-                        ORCTDocEntrys =
-                            "select ORCT.DocEntry from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where RCT2.DocEntry = '" +
-                            dpDocEntry + "' and InvType = 203 and ORCT.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
+                        orctDocEntrys =
+                            $"select ORCT.DocEntry from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where RCT2.DocEntry = '{dpDocEntry}' and InvType = 203 and ORCT.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
                         recSet2.DoQuery("select ORCT.DocEntry, avg(ORCT.TrsfrSum) as 'TrsfrSum' , SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
-                                        "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + ORCTDocEntrys + ") group by ORCT.DocEntry");
+                                        "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + orctDocEntrys + ") group by ORCT.DocEntry");
                     }
 
+                    List<Tuple<int, decimal, decimal>> sumPayments = new List<Tuple<int, decimal, decimal>>();
                     while (!recSet2.EoF)
                     {
-                        int OCRTDocEntry = int.Parse(recSet2.Fields.Item("DocEntry").Value.ToString());
+                        int ocrtDocEntry = int.Parse(recSet2.Fields.Item("DocEntry").Value.ToString());
                         decimal appliedAmountLc = decimal.Parse(recSet2.Fields.Item("TrsfrSum").Value.ToString());
                         decimal appliedAmountFc = decimal.Parse(recSet2.Fields.Item("AppliedFC").Value.ToString());
-                        sumPayments.Add(new Tuple<int, decimal, decimal>(OCRTDocEntry, appliedAmountLc, appliedAmountFc));
+                        sumPayments.Add(new Tuple<int, decimal, decimal>(ocrtDocEntry, appliedAmountLc, appliedAmountFc));
                         recSet2.MoveNext();
                     }
-
-
-                    string docEntrysJounralEntrysQuery =
-                        "select  RCT2.DocEntry from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum inner join OJDT on RCT2.DocTransId = OJDT.TransId where ORCT.DocEntry in (" +
-                        ORCTDocEntrys + ") and OJDT.TransCode = 2 and RCT2.InvType = 30";// ისეტი საჯურნალო გატარებები რომლებსაც აქვს ტრანზაქციის კოდი 2 და არ უდნა დაიტვალოს კურსის დაანგარიშებისას
-
-                    Recordset recSetLast = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    recSetLast.DoQuery(docEntrysJounralEntrysQuery);
-
-                    string docEntrysJounralEntrys = string.Empty;
-                    while (!recSetLast.EoF)
-                    {
-                        docEntrysJounralEntrys += recSetLast.Fields.Item("DocEntry").Value + ",";
-                        recSetLast.MoveNext();
-                    }
-                    docEntrysJounralEntrys = docEntrysJounralEntrys.Remove(docEntrysJounralEntrys.Length - 1, 1);
-
-
                     //აქ გვაქვს  ლოკალულ ვალუტაში გატარებილი დოკუმენტების ჯამი და ნომერი რომელიც უნდა გამოაკლდეს გადახდის სრულ თანხას LC- ში
 
                     Recordset recSet4 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                     recSet4.DoQuery(
-                        "select DocEntry, SUM(LcPrices) as SumLCPayments from ( select  ORCT.DocEntry as 'DocEntry',  SUM(case when AppliedFC = 0 and RCT2.DocEntry not in (" + docEntrysJounralEntrys + ") then RCT2.SumApplied else 0 end ) as 'LcPrices' from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" +
-                        ORCTDocEntrys +
+                        "select DocEntry, SUM(LcPrices) as SumLCPayments from ( select  ORCT.DocEntry as 'DocEntry',  SUM(case when AppliedFC = 0 then RCT2.SumApplied else 0 end ) as 'LcPrices' from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" +
+                        orctDocEntrys +
                         ") group by  RCT2.SumApplied , ORCT.DocEntry ) LcPricesTable group by DocEntry");
 
                     Dictionary<string, decimal> DocumentLcPriceSums = new Dictionary<string, decimal>();
                     while (!recSet4.EoF)
                     {
-                        string OCRTDocEntry = recSet4.Fields.Item("DocEntry").Value.ToString();
-                        decimal SumLCPayments = decimal.Parse(recSet4.Fields.Item("SumLCPayments").Value.ToString());
-                        DocumentLcPriceSums.Add(OCRTDocEntry, SumLCPayments);
+                        string ocrtDocEntry = recSet4.Fields.Item("DocEntry").Value.ToString();
+                        decimal sumLcPayments = decimal.Parse(recSet4.Fields.Item("SumLCPayments").Value.ToString());
+                        DocumentLcPriceSums.Add(ocrtDocEntry, sumLcPayments);
                         recSet4.MoveNext();
 
                         // აქ არის ლოკალურ ვალუტაში გატარებულ დოკუმენტებზე გადახდილი სტრული თანხა  
                     }
-
 
                     Dictionary<string, decimal> rateByDocuments = new Dictionary<string, decimal>();
 
@@ -127,106 +95,43 @@ namespace DownPaymentLogic
                     {
                         var rate = (tuple.Item2 - DocumentLcPriceSums[tuple.Item1.ToString()]) / tuple.Item3;
                         var paymentDocEntry = tuple.Item1.ToString();
-
                         rateByDocuments.Add(paymentDocEntry, rate);
-
-                        DocsWithRateAndValue.Add(new XContainer()
+                        DocsWithRateAndValue.Add(new XContainer
                         {
                             CurrRate = rate,
                             OrctDocEntry = paymentDocEntry
                         });
                     }
-                    // აქ გადახდის სრულ თანხას ვაკლებ ლოკალურ ვალუტაში გადახდილი დოკუმენტის ჯამს და ვყოფ სრულ თანხაზე უცხოურ ვალუტაში
-
-
-                    //while (!recSet2.EoF)
-                    //{
-                    //    decimal rate = (decimal.Parse(recSet2.Fields.Item("TrsfrSum").Value.ToString()) - DocumentLcPriceSums[recSet2.Fields.Item("DocEntry").Value.ToString()]) /
-                    //            decimal.Parse(recSet2.Fields.Item("AppliedFC").Value.ToString());
-                    //    string paymentDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
-                    //    rateByDocuments.Add(paymentDocEntry, rate);
-                    //    recSet2.MoveNext();
-
-                    //}
-
+                    // აქ გადახდის სრულ თანხას ვაკლებ ლოკალურ ვალუტაში გადახდილი დოკუმენტის ჯამს და ვყოფ სრულ თანხაზე უცხოურ ვალუტაში 
                     Recordset recSet3 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    recSet3.DoQuery("select ORCT.DocEntry, RCT2.DocEntry as 'DpDocEntry',    RCT2.AppliedFC from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry  in ( " + ORCTDocEntrys + ") and RCT2.DocEntry = '" + dpDocEntry + "' and InvType = 203");
-
-
+                    recSet3.DoQuery("select ORCT.DocEntry, RCT2.DocEntry as 'DpDocEntry',    RCT2.AppliedFC from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry  in ( " + orctDocEntrys + ") and RCT2.DocEntry = '" + dpDocEntry + "' and InvType = 203");
                     Dictionary<string, decimal> dPIncomingPaymentShareAmountFc = new Dictionary<string, decimal>();
                     while (!recSet3.EoF)
                     {
-                        decimal AppliedFcbyDp = decimal.Parse(recSet3.Fields.Item("AppliedFC").Value.ToString());
-                        string PaymentDocEntry = recSet3.Fields.Item("DocEntry").Value.ToString();
-                        dPIncomingPaymentShareAmountFc.Add(PaymentDocEntry, AppliedFcbyDp);
-
-                        DocsWithRateAndValue.Where(x => x.OrctDocEntry == PaymentDocEntry).ToList().ForEach(s => s.AmountFC = AppliedFcbyDp);
-
-
+                        decimal appliedFcbyDp = decimal.Parse(recSet3.Fields.Item("AppliedFC").Value.ToString());
+                        string paymentDocEntry = recSet3.Fields.Item("DocEntry").Value.ToString();
+                        dPIncomingPaymentShareAmountFc.Add(paymentDocEntry, appliedFcbyDp);
+                        DocsWithRateAndValue.Where(x => x.OrctDocEntry == paymentDocEntry).ToList().ForEach(s => s.AmountFC = appliedFcbyDp);
                         recSet3.MoveNext();
                     }
 
-                    //var rata = DocsWithRateAndValue.
-
-                    decimal LCSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC * doc.CurrRate);
-                    decimal FCSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC);
-                    decimal WeightedRate = LCSum / FCSum;
-
-                    paidAmountDpLc += decimal.Parse(downpayment.First().Value) * WeightedRate;
-                    Console.WriteLine();
-
-                    //#region ჩემი ლოგიკა
-
-                    //Dictionary<string, decimal> amountRatio = new Dictionary<string, decimal>(); // თანხების ფარდობა გადასხდისთვის
-
-
-                    //foreach (KeyValuePair<string, decimal> variable in dPIncomingPaymentShareAmountFc)
-                    //{
-                    //    decimal division = variable.Value / dPIncomingPaymentShareAmountFc.Sum(x => x.Value);
-                    //    amountRatio.Add(variable.Key, division);
-                    //}
-
-
-                    //Dictionary<string, decimal> docEntryPaymentFcRatioFromNetAmount = new Dictionary<string, decimal>();
-
-                    //foreach (var VARIABLE in amountRatio)
-                    //{
-                    //    decimal fcRatioFromNetAmount = VARIABLE.Value * decimal.Parse(netAmountToDrow);
-                    //    string paymentDocEntry = VARIABLE.Key;
-                    //    docEntryPaymentFcRatioFromNetAmount.Add(paymentDocEntry, fcRatioFromNetAmount);
-                    //}
-
-                    //foreach (var VARIABLE in docEntryPaymentFcRatioFromNetAmount)
-                    //{
-                    //    paidAmountDpLc += VARIABLE.Value * rateByDocuments[VARIABLE.Key];
-                    //}
-
-                    ////აქ ვამრავლევ ავანსის ტანხის წილს თავის შესაბამისს კურსზე 
-                    //#endregion
-
-                    #region იმათი ლოგიკა
-
-
-
-                    #endregion
-
+                    decimal lcSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC * doc.CurrRate);
+                    decimal fcSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC);
+                    decimal weightedRate = lcSum / fcSum;
+                    paidAmountDpLc += decimal.Parse(downpayment.First().Value) * weightedRate;
                 }
                 else
                 {
-
-
                     Recordset recSet2 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                     recSet2.DoQuery("SELECT DocEntry FROM ODPO WHERE DocNum = '" + downpayment.First().Key + "'");
                     var dpDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
 
-                    string ORCTDocEntrys =
+                    string orctDocEntrys =
                         "select OVPM.DocEntry from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where VPM2.DocEntry = '" +
-                        dpDocEntry + "' and InvType = 204 and OVPM.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
-
-
+                        dpDocEntry + "' and InvType = 204 and OVPM.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები 
 
                     recSet2.DoQuery("select OVPM.DocEntry, avg(OVPM.TrsfrSum) as 'TrsfrSum' , SUM(VPM2.AppliedFC) as 'AppliedFC' from OVPM inner join VPM2 on " +
-                                    "OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (" + ORCTDocEntrys + ") group by OVPM.DocEntry");
+                                    "OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (" + orctDocEntrys + ") group by OVPM.DocEntry");
                     // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრუტლი თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
 
                     if (recSet2.EoF)
@@ -234,51 +139,39 @@ namespace DownPaymentLogic
                         recSet2.DoQuery($"SELECT BaseRef FROM DPO1 WHERE DocEntry = '{dpDocEntry}'");
                         dpDocEntry = recSet2.Fields.Item("BaseRef").Value.ToString();
 
-                        ORCTDocEntrys =
+                        orctDocEntrys =
                             $"select OVPM.DocEntry from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where VPM2.DocEntry = '{dpDocEntry}' and InvType = 204 and OVPM.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
                         recSet2.DoQuery("select OVPM.DocEntry, avg(OVPM.TrsfrSum) as 'TrsfrSum' , SUM(VPM2.AppliedFC) as 'AppliedFC' from OVPM inner join VPM2 on " +
-                                        "OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (" + ORCTDocEntrys + ") group by OVPM.DocEntry");
+                                        "OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (" + orctDocEntrys + ") group by OVPM.DocEntry");
                     }
-
-
-
 
                     List<Tuple<int, decimal, decimal>> sumPayments = new List<Tuple<int, decimal, decimal>>();
                     while (!recSet2.EoF)
                     {
-                        int OCRTDocEntry = int.Parse(recSet2.Fields.Item("DocEntry").Value.ToString());
+                        int ocrtDocEntry = int.Parse(recSet2.Fields.Item("DocEntry").Value.ToString());
                         decimal appliedAmountLc = decimal.Parse(recSet2.Fields.Item("TrsfrSum").Value.ToString());
                         decimal appliedAmountFc = decimal.Parse(recSet2.Fields.Item("AppliedFC").Value.ToString());
-                        sumPayments.Add(new Tuple<int, decimal, decimal>(OCRTDocEntry, appliedAmountLc, appliedAmountFc));
+                        sumPayments.Add(new Tuple<int, decimal, decimal>(ocrtDocEntry, appliedAmountLc, appliedAmountFc));
                         recSet2.MoveNext();
                     }
-
-
-
-
-
-
-
-
                     //აქ გვაქვს  ლოკალულ ვალუტაში გატარებილი დოკუმენტების ჯამი და ნომერი რომელიც უნდა გამოაკლდეს გადახდის სრულ თანხას LC- ში
 
                     Recordset recSet4 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                     recSet4.DoQuery(
                         "select DocEntry, SUM(LcPrices) as SumLCPayments from ( select  OVPM.DocEntry as 'DocEntry',  SUM(case when AppliedFC = 0 then VPM2.SumApplied else 0 end ) as 'LcPrices' from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (" +
-                        ORCTDocEntrys +
+                        orctDocEntrys +
                         ") group by  VPM2.SumApplied , OVPM.DocEntry ) LcPricesTable group by DocEntry");
 
                     Dictionary<string, decimal> DocumentLcPriceSums = new Dictionary<string, decimal>();
                     while (!recSet4.EoF)
                     {
-                        string OCRTDocEntry = recSet4.Fields.Item("DocEntry").Value.ToString();
-                        decimal SumLCPayments = decimal.Parse(recSet4.Fields.Item("SumLCPayments").Value.ToString());
-                        DocumentLcPriceSums.Add(OCRTDocEntry, SumLCPayments);
+                        string ocrtDocEntry = recSet4.Fields.Item("DocEntry").Value.ToString();
+                        decimal sumLcPayments = decimal.Parse(recSet4.Fields.Item("SumLCPayments").Value.ToString());
+                        DocumentLcPriceSums.Add(ocrtDocEntry, sumLcPayments);
                         recSet4.MoveNext();
 
                         // აქ არის ლოკალურ ვალუტაში გატარებულ დოკუმენტებზე გადახდილი სტრული თანხა  
                     }
-
 
                     Dictionary<string, decimal> rateByDocuments = new Dictionary<string, decimal>();
 
@@ -288,132 +181,31 @@ namespace DownPaymentLogic
                     {
                         var rate = (tuple.Item2 - DocumentLcPriceSums[tuple.Item1.ToString()]) / tuple.Item3;
                         var paymentDocEntry = tuple.Item1.ToString();
-
                         rateByDocuments.Add(paymentDocEntry, rate);
-
-                        DocsWithRateAndValue.Add(new XContainer()
+                        DocsWithRateAndValue.Add(new XContainer
                         {
                             CurrRate = rate,
                             OrctDocEntry = paymentDocEntry
                         });
                     }
-                    // აქ გადახდის სრულ თანხას ვაკლებ ლოკალურ ვალუტაში გადახდილი დოკუმენტის ჯამს და ვყოფ სრულ თანხაზე უცხოურ ვალუტაში
-
-
-                    //while (!recSet2.EoF)
-                    //{
-                    //    decimal rate = (decimal.Parse(recSet2.Fields.Item("TrsfrSum").Value.ToString()) - DocumentLcPriceSums[recSet2.Fields.Item("DocEntry").Value.ToString()]) /
-                    //            decimal.Parse(recSet2.Fields.Item("AppliedFC").Value.ToString());
-                    //    string paymentDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
-                    //    rateByDocuments.Add(paymentDocEntry, rate);
-                    //    recSet2.MoveNext();
-
-                    //}
-
+                    // აქ გადახდის სრულ თანხას ვაკლებ ლოკალურ ვალუტაში გადახდილი დოკუმენტის ჯამს და ვყოფ სრულ თანხაზე უცხოურ ვალუტაში 
                     Recordset recSet3 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    recSet3.DoQuery("select OVPM.DocEntry, VPM2.DocEntry as 'DpDocEntry',    VPM2.AppliedFC from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry  in ( " + ORCTDocEntrys + ") and VPM2.DocEntry = '" + dpDocEntry + "' and InvType = 204");
-
-
+                    recSet3.DoQuery("select OVPM.DocEntry, VPM2.DocEntry as 'DpDocEntry',    VPM2.AppliedFC from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry  in ( " + orctDocEntrys + ") and VPM2.DocEntry = '" + dpDocEntry + "' and InvType = 204");
                     Dictionary<string, decimal> dPIncomingPaymentShareAmountFc = new Dictionary<string, decimal>();
                     while (!recSet3.EoF)
                     {
-                        decimal AppliedFcbyDp = decimal.Parse(recSet3.Fields.Item("AppliedFC").Value.ToString());
-                        string PaymentDocEntry = recSet3.Fields.Item("DocEntry").Value.ToString();
-                        dPIncomingPaymentShareAmountFc.Add(PaymentDocEntry, AppliedFcbyDp);
-
-                        DocsWithRateAndValue.Where(x => x.OrctDocEntry == PaymentDocEntry).ToList().ForEach(s => s.AmountFC = AppliedFcbyDp);
-
-
+                        decimal appliedFcbyDp = decimal.Parse(recSet3.Fields.Item("AppliedFC").Value.ToString());
+                        string paymentDocEntry = recSet3.Fields.Item("DocEntry").Value.ToString();
+                        dPIncomingPaymentShareAmountFc.Add(paymentDocEntry, appliedFcbyDp);
+                        DocsWithRateAndValue.Where(x => x.OrctDocEntry == paymentDocEntry).ToList().ForEach(s => s.AmountFC = appliedFcbyDp);
                         recSet3.MoveNext();
                     }
 
-                    //var rata = DocsWithRateAndValue.
-
-                    decimal LCSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC * doc.CurrRate);
-                    decimal FCSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC);
-                    decimal WeightedRate = LCSum / FCSum;
-
-                    paidAmountDpLc += decimal.Parse(downpayment.First().Value) * WeightedRate;
-                    Console.WriteLine();
-
-                    //#region ჩემი ლოგიკა
-
-                    //Dictionary<string, decimal> amountRatio = new Dictionary<string, decimal>(); // თანხების ფარდობა გადასხდისთვის
-
-
-                    //foreach (KeyValuePair<string, decimal> variable in dPIncomingPaymentShareAmountFc)
-                    //{
-                    //    decimal division = variable.Value / dPIncomingPaymentShareAmountFc.Sum(x => x.Value);
-                    //    amountRatio.Add(variable.Key, division);
-                    //}
-
-
-                    //Dictionary<string, decimal> docEntryPaymentFcRatioFromNetAmount = new Dictionary<string, decimal>();
-
-                    //foreach (var VARIABLE in amountRatio)
-                    //{
-                    //    decimal fcRatioFromNetAmount = VARIABLE.Value * decimal.Parse(netAmountToDrow);
-                    //    string paymentDocEntry = VARIABLE.Key;
-                    //    docEntryPaymentFcRatioFromNetAmount.Add(paymentDocEntry, fcRatioFromNetAmount);
-                    //}
-
-                    //foreach (var VARIABLE in docEntryPaymentFcRatioFromNetAmount)
-                    //{
-                    //    paidAmountDpLc += VARIABLE.Value * rateByDocuments[VARIABLE.Key];
-                    //}
-
-                    ////აქ ვამრავლევ ავანსის ტანხის წილს თავის შესაბამისს კურსზე 
-                    //#endregion
-
-                    #region იმათი ლოგიკა
-
-
-
-                    #endregion
-
+                    decimal lcSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC * doc.CurrRate);
+                    decimal fcSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC);
+                    decimal weightedRate = lcSum / fcSum;
+                    paidAmountDpLc += decimal.Parse(downpayment.First().Value) * weightedRate;
                 }
-                //{
-                //    Recordset recSet2 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-                //    recSet2.DoQuery("SELECT DocEntry FROM ODPO WHERE DocNum = '" + txtID.Value + "'");
-                //    var dpDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
-                //    objMD.DoQuery(
-                //        "select OVPM.DocEntry from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where VPM2.DocEntry = '" + dpDocEntry + "' and InvType = 204 and OVPM.Canceled = 'N'");
-
-                //    string OVPMDocEntrys = string.Empty;
-                //    while (!recSet2.EoF)
-                //    {
-                //        OVPMDocEntrys += " OVPM.DocEntry = '" + recSet2.Fields.Item("DocEntry").Value + "'" + " OR ";
-                //        recSet2.MoveNext();
-                //    }
-
-                //    OVPMDocEntrys = OVPMDocEntrys.Remove(OVPMDocEntrys.Length - 3, 3);
-
-                //    recSet2.DoQuery("select OVPM.TrsfrSum , VPM2.AppliedFC from OVPM inner join VPM2 on " +
-                //                    "OVPM.DocEntry = VPM2.DocNum where  '" + OVPMDocEntrys + "'");
-
-                //    Dictionary<string, decimal> rateByDocuments = new Dictionary<string, decimal>();
-
-                //    while (!recSet2.EoF)
-                //    {
-                //        decimal rate = decimal.Parse(recSet2.Fields.Item("TrsfrSum").Value.ToString()) /
-                //                       decimal.Parse(recSet2.Fields.Item("AppliedFC").Value.ToString());
-                //        string paymentDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
-                //        rateByDocuments.Add(paymentDocEntry, rate);
-                //        recSet2.MoveNext();
-                //    }
-
-                //    Recordset recSet3 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-                //    recSet3.DoQuery("select OVPM.DocEntry, VPM2.DocEntry as 'DpDocEntry',    VPM2.AppliedFC from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where ( ORCTDocEntrys) and VPM2.DocEntry = '" + dpDocEntry + "' and InvType = 204");
-
-                //    while (!recSet3.EoF)
-                //    {
-                //        paidAmountDpLc += decimal.Parse(recSet3.Fields.Item("AppliedFC").Value.ToString()) *
-                //                          rateByDocuments[recSet3.Fields.Item("AppliedFC").Value.ToString()];
-                //        recSet3.MoveNext();
-                //    }
-
-                //}
-
                 try
                 {
                     paidAmountDpFc += decimal.Parse(downpayment.First().Value);
@@ -425,380 +217,7 @@ namespace DownPaymentLogic
                     SAPbouiCOM.Framework.Application.SBO_Application.Forms.ActiveForm.Close();
                 }
             }
-            //}
-
-
-            //}
-
-            //for (int i = 1; i <= matrix.RowCount; i++)
-            //{
-            //    var checkbox = (SAPbouiCOM.CheckBox)matrix.Columns.Item("380000138").Cells.Item(i).Specific;
-            //    if (checkbox.Checked)
-            //    {
-            //        EditText txtMoney =
-            //            (SAPbouiCOM.EditText)matrix.Columns.Item("29").Cells.Item(i)
-            //                .Specific; //net amount to drow//TODO
-            //        EditText txtID = (SAPbouiCOM.EditText)matrix.Columns.Item("68").Cells.Item(i).Specific; //docNumber
-            //        string netAmountToDrow = txtMoney.Value.Split(' ')[0]; //net amount to drow
-
-            //        var objMD = (SAPbobsCOM.Recordset)_comp.GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
-
-            //        if (formType == "133")
-            //        {
-            //            //string ORCTDocEntrys = string.Empty;
-
-            //            Recordset recSet2 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-            //            recSet2.DoQuery("SELECT DocEntry FROM ODPI WHERE DocNum = '" + txtID.Value + "'");
-            //            var dpDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
-
-            //            string ORCTDocEntrys =
-            //                "select ORCT.DocEntry from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where RCT2.DocEntry = '" +
-            //                dpDocEntry + "' and InvType = 203 and ORCT.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
-
-
-
-            //            recSet2.DoQuery("select ORCT.DocEntry, avg(ORCT.TrsfrSum) as 'TrsfrSum' , SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
-            //                "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + ORCTDocEntrys + ") group by ORCT.DocEntry");
-            //            // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრუტლი თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
-
-            //            List<Tuple<int, decimal, decimal>> sumPayments = new List<Tuple<int, decimal, decimal>>();
-            //            while (!recSet2.EoF)
-            //            {
-            //                int OCRTDocEntry = int.Parse(recSet2.Fields.Item("DocEntry").Value.ToString());
-            //                decimal appliedAmountLc = decimal.Parse(recSet2.Fields.Item("TrsfrSum").Value.ToString());
-            //                decimal appliedAmountFc = decimal.Parse(recSet2.Fields.Item("AppliedFC").Value.ToString());
-            //                sumPayments.Add(new Tuple<int, decimal, decimal>(OCRTDocEntry, appliedAmountLc, appliedAmountFc));
-            //                recSet2.MoveNext();
-            //            }
-
-
-
-
-
-
-
-
-            //            //აქ გვაქვს  ლოკალულ ვალუტაში გატარებილი დოკუმენტების ჯამი და ნომერი რომელიც უნდა გამოაკლდეს გადახდის სრულ თანხას LC- ში
-
-            //            Recordset recSet4 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-            //            recSet4.DoQuery(
-            //                "select DocEntry, SUM(LcPrices) as SumLCPayments from ( select  ORCT.DocEntry as 'DocEntry',  SUM(case when AppliedFC = 0 then RCT2.SumApplied else 0 end ) as 'LcPrices' from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" +
-            //                ORCTDocEntrys +
-            //                ") group by  RCT2.SumApplied , ORCT.DocEntry ) LcPricesTable group by DocEntry");
-
-            //            Dictionary<string, decimal> DocumentLcPriceSums = new Dictionary<string, decimal>();
-            //            while (!recSet4.EoF)
-            //            {
-            //                string OCRTDocEntry = recSet4.Fields.Item("DocEntry").Value.ToString();
-            //                decimal SumLCPayments = decimal.Parse(recSet4.Fields.Item("SumLCPayments").Value.ToString());
-            //                DocumentLcPriceSums.Add(OCRTDocEntry, SumLCPayments);
-            //                recSet4.MoveNext();
-
-            //                // აქ არის ლოკალურ ვალუტაში გატარებულ დოკუმენტებზე გადახდილი სტრული თანხა  
-            //            }
-
-
-            //            Dictionary<string, decimal> rateByDocuments = new Dictionary<string, decimal>();
-
-            //            List<XContainer> DocsWithRateAndValue = new List<XContainer>();
-
-            //            foreach (var tuple in sumPayments)
-            //            {
-            //                var rate = (tuple.Item2 - DocumentLcPriceSums[tuple.Item1.ToString()]) / tuple.Item3;
-            //                var paymentDocEntry = tuple.Item1.ToString();
-
-            //                rateByDocuments.Add(paymentDocEntry, rate);
-
-            //                DocsWithRateAndValue.Add(new XContainer()
-            //                {
-            //                    CurrRate = rate,
-            //                    OrctDocEntry = paymentDocEntry
-            //                });
-            //            }
-            //            // აქ გადახდის სრულ თანხას ვაკლებ ლოკალურ ვალუტაში გადახდილი დოკუმენტის ჯამს და ვყოფ სრულ თანხაზე უცხოურ ვალუტაში
-
-
-            //            //while (!recSet2.EoF)
-            //            //{
-            //            //    decimal rate = (decimal.Parse(recSet2.Fields.Item("TrsfrSum").Value.ToString()) - DocumentLcPriceSums[recSet2.Fields.Item("DocEntry").Value.ToString()]) /
-            //            //            decimal.Parse(recSet2.Fields.Item("AppliedFC").Value.ToString());
-            //            //    string paymentDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
-            //            //    rateByDocuments.Add(paymentDocEntry, rate);
-            //            //    recSet2.MoveNext();
-
-            //            //}
-
-            //            Recordset recSet3 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-            //            recSet3.DoQuery("select ORCT.DocEntry, RCT2.DocEntry as 'DpDocEntry',    RCT2.AppliedFC from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry  in ( " + ORCTDocEntrys + ") and RCT2.DocEntry = '" + dpDocEntry + "' and InvType = 203");
-
-
-            //            Dictionary<string, decimal> dPIncomingPaymentShareAmountFc = new Dictionary<string, decimal>();
-            //            while (!recSet3.EoF)
-            //            {
-            //                decimal AppliedFcbyDp = decimal.Parse(recSet3.Fields.Item("AppliedFC").Value.ToString());
-            //                string PaymentDocEntry = recSet3.Fields.Item("DocEntry").Value.ToString();
-            //                dPIncomingPaymentShareAmountFc.Add(PaymentDocEntry, AppliedFcbyDp);
-
-            //                DocsWithRateAndValue.Where(x => x.OrctDocEntry == PaymentDocEntry).ToList().ForEach(s => s.AmountFC = AppliedFcbyDp);
-
-
-            //                recSet3.MoveNext();
-            //            }
-
-            //            //var rata = DocsWithRateAndValue.
-
-            //            decimal LCSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC * doc.CurrRate);
-            //            decimal FCSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC);
-            //            decimal WeightedRate = LCSum / FCSum;
-
-            //            paidAmountDpLc += decimal.Parse(netAmountToDrow) * WeightedRate;
-            //            Console.WriteLine();
-
-            //            //#region ჩემი ლოგიკა
-
-            //            //Dictionary<string, decimal> amountRatio = new Dictionary<string, decimal>(); // თანხების ფარდობა გადასხდისთვის
-
-
-            //            //foreach (KeyValuePair<string, decimal> variable in dPIncomingPaymentShareAmountFc)
-            //            //{
-            //            //    decimal division = variable.Value / dPIncomingPaymentShareAmountFc.Sum(x => x.Value);
-            //            //    amountRatio.Add(variable.Key, division);
-            //            //}
-
-
-            //            //Dictionary<string, decimal> docEntryPaymentFcRatioFromNetAmount = new Dictionary<string, decimal>();
-
-            //            //foreach (var VARIABLE in amountRatio)
-            //            //{
-            //            //    decimal fcRatioFromNetAmount = VARIABLE.Value * decimal.Parse(netAmountToDrow);
-            //            //    string paymentDocEntry = VARIABLE.Key;
-            //            //    docEntryPaymentFcRatioFromNetAmount.Add(paymentDocEntry, fcRatioFromNetAmount);
-            //            //}
-
-            //            //foreach (var VARIABLE in docEntryPaymentFcRatioFromNetAmount)
-            //            //{
-            //            //    paidAmountDpLc += VARIABLE.Value * rateByDocuments[VARIABLE.Key];
-            //            //}
-
-            //            ////აქ ვამრავლევ ავანსის ტანხის წილს თავის შესაბამისს კურსზე 
-            //            //#endregion
-
-            //            #region იმათი ლოგიკა
-
-
-
-            //            #endregion
-
-            //        }
-
-
-            //        else
-            //        {
-            //            //string ORCTDocEntrys = string.Empty;
-
-            //            Recordset recSet2 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-            //            recSet2.DoQuery("SELECT DocEntry FROM ODPO WHERE DocNum = '" + txtID.Value + "'");
-            //            var dpDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
-
-            //            string ORCTDocEntrys =
-            //                "select OVPM.DocEntry from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where VPM2.DocEntry = '" +
-            //                dpDocEntry + "' and InvType = 204 and OVPM.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
-
-
-
-            //            recSet2.DoQuery("select OVPM.DocEntry, avg(OVPM.TrsfrSum) as 'TrsfrSum' , SUM(VPM2.AppliedFC) as 'AppliedFC' from OVPM inner join VPM2 on " +
-            //                            "OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (" + ORCTDocEntrys + ") group by OVPM.DocEntry");
-            //            // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრუტლი თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
-
-            //            List<Tuple<int, decimal, decimal>> sumPayments = new List<Tuple<int, decimal, decimal>>();
-            //            while (!recSet2.EoF)
-            //            {
-            //                int OCRTDocEntry = int.Parse(recSet2.Fields.Item("DocEntry").Value.ToString());
-            //                decimal appliedAmountLc = decimal.Parse(recSet2.Fields.Item("TrsfrSum").Value.ToString());
-            //                decimal appliedAmountFc = decimal.Parse(recSet2.Fields.Item("AppliedFC").Value.ToString());
-            //                sumPayments.Add(new Tuple<int, decimal, decimal>(OCRTDocEntry, appliedAmountLc, appliedAmountFc));
-            //                recSet2.MoveNext();
-            //            }
-
-
-
-
-
-
-
-
-            //            //აქ გვაქვს  ლოკალულ ვალუტაში გატარებილი დოკუმენტების ჯამი და ნომერი რომელიც უნდა გამოაკლდეს გადახდის სრულ თანხას LC- ში
-
-            //            Recordset recSet4 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-            //            recSet4.DoQuery(
-            //                "select DocEntry, SUM(LcPrices) as SumLCPayments from ( select  OVPM.DocEntry as 'DocEntry',  SUM(case when AppliedFC = 0 then VPM2.SumApplied else 0 end ) as 'LcPrices' from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (" +
-            //                ORCTDocEntrys +
-            //                ") group by  VPM2.SumApplied , OVPM.DocEntry ) LcPricesTable group by DocEntry");
-
-            //            Dictionary<string, decimal> DocumentLcPriceSums = new Dictionary<string, decimal>();
-            //            while (!recSet4.EoF)
-            //            {
-            //                string OCRTDocEntry = recSet4.Fields.Item("DocEntry").Value.ToString();
-            //                decimal SumLCPayments = decimal.Parse(recSet4.Fields.Item("SumLCPayments").Value.ToString());
-            //                DocumentLcPriceSums.Add(OCRTDocEntry, SumLCPayments);
-            //                recSet4.MoveNext();
-
-            //                // აქ არის ლოკალურ ვალუტაში გატარებულ დოკუმენტებზე გადახდილი სტრული თანხა  
-            //            }
-
-
-            //            Dictionary<string, decimal> rateByDocuments = new Dictionary<string, decimal>();
-
-            //            List<XContainer> DocsWithRateAndValue = new List<XContainer>();
-
-            //            foreach (var tuple in sumPayments)
-            //            {
-            //                var rate = (tuple.Item2 - DocumentLcPriceSums[tuple.Item1.ToString()]) / tuple.Item3;
-            //                var paymentDocEntry = tuple.Item1.ToString();
-
-            //                rateByDocuments.Add(paymentDocEntry, rate);
-
-            //                DocsWithRateAndValue.Add(new XContainer()
-            //                {
-            //                    CurrRate = rate,
-            //                    OrctDocEntry = paymentDocEntry
-            //                });
-            //            }
-            //            // აქ გადახდის სრულ თანხას ვაკლებ ლოკალურ ვალუტაში გადახდილი დოკუმენტის ჯამს და ვყოფ სრულ თანხაზე უცხოურ ვალუტაში
-
-
-            //            //while (!recSet2.EoF)
-            //            //{
-            //            //    decimal rate = (decimal.Parse(recSet2.Fields.Item("TrsfrSum").Value.ToString()) - DocumentLcPriceSums[recSet2.Fields.Item("DocEntry").Value.ToString()]) /
-            //            //            decimal.Parse(recSet2.Fields.Item("AppliedFC").Value.ToString());
-            //            //    string paymentDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
-            //            //    rateByDocuments.Add(paymentDocEntry, rate);
-            //            //    recSet2.MoveNext();
-
-            //            //}
-
-            //            Recordset recSet3 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-            //            recSet3.DoQuery("select OVPM.DocEntry, VPM2.DocEntry as 'DpDocEntry',    VPM2.AppliedFC from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry  in ( " + ORCTDocEntrys + ") and VPM2.DocEntry = '" + dpDocEntry + "' and InvType = 204");
-
-
-            //            Dictionary<string, decimal> dPIncomingPaymentShareAmountFc = new Dictionary<string, decimal>();
-            //            while (!recSet3.EoF)
-            //            {
-            //                decimal AppliedFcbyDp = decimal.Parse(recSet3.Fields.Item("AppliedFC").Value.ToString());
-            //                string PaymentDocEntry = recSet3.Fields.Item("DocEntry").Value.ToString();
-            //                dPIncomingPaymentShareAmountFc.Add(PaymentDocEntry, AppliedFcbyDp);
-
-            //                DocsWithRateAndValue.Where(x => x.OrctDocEntry == PaymentDocEntry).ToList().ForEach(s => s.AmountFC = AppliedFcbyDp);
-
-
-            //                recSet3.MoveNext();
-            //            }
-
-            //            //var rata = DocsWithRateAndValue.
-
-            //            decimal LCSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC * doc.CurrRate);
-            //            decimal FCSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC);
-            //            decimal WeightedRate = LCSum / FCSum;
-
-            //            paidAmountDpLc += decimal.Parse(netAmountToDrow) * WeightedRate;
-            //            Console.WriteLine();
-
-            //            //#region ჩემი ლოგიკა
-
-            //            //Dictionary<string, decimal> amountRatio = new Dictionary<string, decimal>(); // თანხების ფარდობა გადასხდისთვის
-
-
-            //            //foreach (KeyValuePair<string, decimal> variable in dPIncomingPaymentShareAmountFc)
-            //            //{
-            //            //    decimal division = variable.Value / dPIncomingPaymentShareAmountFc.Sum(x => x.Value);
-            //            //    amountRatio.Add(variable.Key, division);
-            //            //}
-
-
-            //            //Dictionary<string, decimal> docEntryPaymentFcRatioFromNetAmount = new Dictionary<string, decimal>();
-
-            //            //foreach (var VARIABLE in amountRatio)
-            //            //{
-            //            //    decimal fcRatioFromNetAmount = VARIABLE.Value * decimal.Parse(netAmountToDrow);
-            //            //    string paymentDocEntry = VARIABLE.Key;
-            //            //    docEntryPaymentFcRatioFromNetAmount.Add(paymentDocEntry, fcRatioFromNetAmount);
-            //            //}
-
-            //            //foreach (var VARIABLE in docEntryPaymentFcRatioFromNetAmount)
-            //            //{
-            //            //    paidAmountDpLc += VARIABLE.Value * rateByDocuments[VARIABLE.Key];
-            //            //}
-
-            //            ////აქ ვამრავლევ ავანსის ტანხის წილს თავის შესაბამისს კურსზე 
-            //            //#endregion
-
-            //            #region იმათი ლოგიკა
-
-
-
-            //            #endregion
-
-            //        }
-            //        //{
-            //        //    Recordset recSet2 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-            //        //    recSet2.DoQuery("SELECT DocEntry FROM ODPO WHERE DocNum = '" + txtID.Value + "'");
-            //        //    var dpDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
-            //        //    objMD.DoQuery(
-            //        //        "select OVPM.DocEntry from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where VPM2.DocEntry = '" + dpDocEntry + "' and InvType = 204 and OVPM.Canceled = 'N'");
-
-            //        //    string OVPMDocEntrys = string.Empty;
-            //        //    while (!recSet2.EoF)
-            //        //    {
-            //        //        OVPMDocEntrys += " OVPM.DocEntry = '" + recSet2.Fields.Item("DocEntry").Value + "'" + " OR ";
-            //        //        recSet2.MoveNext();
-            //        //    }
-
-            //        //    OVPMDocEntrys = OVPMDocEntrys.Remove(OVPMDocEntrys.Length - 3, 3);
-
-            //        //    recSet2.DoQuery("select OVPM.TrsfrSum , VPM2.AppliedFC from OVPM inner join VPM2 on " +
-            //        //                    "OVPM.DocEntry = VPM2.DocNum where  '" + OVPMDocEntrys + "'");
-
-            //        //    Dictionary<string, decimal> rateByDocuments = new Dictionary<string, decimal>();
-
-            //        //    while (!recSet2.EoF)
-            //        //    {
-            //        //        decimal rate = decimal.Parse(recSet2.Fields.Item("TrsfrSum").Value.ToString()) /
-            //        //                       decimal.Parse(recSet2.Fields.Item("AppliedFC").Value.ToString());
-            //        //        string paymentDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
-            //        //        rateByDocuments.Add(paymentDocEntry, rate);
-            //        //        recSet2.MoveNext();
-            //        //    }
-
-            //        //    Recordset recSet3 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-            //        //    recSet3.DoQuery("select OVPM.DocEntry, VPM2.DocEntry as 'DpDocEntry',    VPM2.AppliedFC from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where ( ORCTDocEntrys) and VPM2.DocEntry = '" + dpDocEntry + "' and InvType = 204");
-
-            //        //    while (!recSet3.EoF)
-            //        //    {
-            //        //        paidAmountDpLc += decimal.Parse(recSet3.Fields.Item("AppliedFC").Value.ToString()) *
-            //        //                          rateByDocuments[recSet3.Fields.Item("AppliedFC").Value.ToString()];
-            //        //        recSet3.MoveNext();
-            //        //    }
-
-            //        //}
-
-            //        try
-            //        {
-            //            paidAmountDpFc += decimal.Parse(netAmountToDrow);
-            //        }
-            //        catch (Exception e)
-            //        {
-            //            SAPbouiCOM.Framework.Application.SBO_Application.SetStatusBarMessage(e.Message,
-            //                BoMessageTime.bmt_Short, true);
-            //            SAPbouiCOM.Framework.Application.SBO_Application.Forms.ActiveForm.Close();
-            //        }
-            //    }
-
-            //}
-
             CalculateWaightedRate(data, paidAmountDpLc, paidAmountDpFc);
-
-
-
         }
 
         private static void CalculateWaightedRate(decimal totalInvFc, /*ref bool isRateCalculated,*/ ref string globalRate,
@@ -807,7 +226,7 @@ namespace DownPaymentLogic
             if (totalInvFc == paidAmountDpFc)
             {
                 var rate = paidAmountDpLc / totalInvFc;
-                globalRate = rate.ToString();
+                globalRate = rate.ToString(CultureInfo.InvariantCulture);
                 //isRateCalculated = true;
             }
             else if (totalInvFc > paidAmountDpFc)
@@ -825,7 +244,7 @@ namespace DownPaymentLogic
             if (data.TotalInv == paidAmountDpFc)
             {
                 var rate = paidAmountDpLc / data.TotalInv;
-                data.GlobalRate = rate.ToString();
+                data.GlobalRate = rate.ToString(CultureInfo.InvariantCulture);
                 data.IsCalculated = true;
             }
             else if (data.TotalInv > paidAmountDpFc)
@@ -835,7 +254,7 @@ namespace DownPaymentLogic
                 var rate = paidAmountDpLc / data.TotalInv;
                 data.IsCalculated = true;
                 //isRateCalculated = true;
-                data.GlobalRate = Math.Round(rate, 6).ToString();
+                data.GlobalRate = Math.Round(rate, 6).ToString(CultureInfo.InvariantCulture);
             }
         }
 
@@ -861,12 +280,11 @@ namespace DownPaymentLogic
             }
             if (recSetTransferDocEntry.RecordCount == 1)
             {
-
-                var ORCTDocEntry = recSetTransferDocEntry.Fields.Item("DocEntry").Value.ToString();
+                var orctDocEntry = recSetTransferDocEntry.Fields.Item("DocEntry").Value.ToString();
 
                 recSerTranferRate.DoQuery(
                     "select ORCT.TrsfrSum , RCT2.AppliedFC, RCT2.DocRate from ORCT inner join RCT2 on " +
-                    "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry = '" + ORCTDocEntry + "'");
+                    "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry = '" + orctDocEntry + "'");
 
                 decimal transferSumLc = decimal.Parse(recSerTranferRate.Fields.Item("TrsfrSum").Value.ToString());
 
@@ -888,61 +306,48 @@ namespace DownPaymentLogic
 
             else
             {
-                string ORCTDocEntrys = string.Empty;
                 Recordset recSet2 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-                ORCTDocEntrys =
-                    "select ORCT.DocEntry from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where RCT2.DocEntry = '" +
-                    downPaymentDocEntry +
-                    "' and InvType = 203 and ORCT.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
-
-
+                string orctDocEntrys = "select ORCT.DocEntry from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where RCT2.DocEntry = '" +
+                                       downPaymentDocEntry +
+                                       "' and InvType = 203 and ORCT.Canceled = 'N'";
 
                 recSet2.DoQuery(
                     "select ORCT.DocEntry, avg(ORCT.TrsfrSum) as 'TrsfrSum' , SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
-                    "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + ORCTDocEntrys +
+                    "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + orctDocEntrys +
                     ") group by ORCT.DocEntry");
                 // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრუტლი თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
 
                 List<Tuple<int, decimal, decimal>> sumPayments = new List<Tuple<int, decimal, decimal>>();
                 while (!recSet2.EoF)
                 {
-                    int OCRTDocEntry = int.Parse(recSet2.Fields.Item("DocEntry").Value.ToString());
+                    int ocrtDocEntry = int.Parse(recSet2.Fields.Item("DocEntry").Value.ToString());
                     decimal appliedAmountLc = decimal.Parse(recSet2.Fields.Item("TrsfrSum").Value.ToString());
                     decimal appliedAmountFc = decimal.Parse(recSet2.Fields.Item("AppliedFC").Value.ToString());
-                    sumPayments.Add(new Tuple<int, decimal, decimal>(OCRTDocEntry, appliedAmountLc, appliedAmountFc));
+                    sumPayments.Add(new Tuple<int, decimal, decimal>(ocrtDocEntry, appliedAmountLc, appliedAmountFc));
                     recSet2.MoveNext();
                 }
-
-
-
-
-
-
-
 
                 //აქ გვაქვს  ლოკალულ ვალუტაში გატარებილი დოკუმენტების ჯამი და ნომერი რომელიც უნდა გამოაკლდეს გადახდის სრულ თანხას LC- ში
 
                 Recordset recSet4 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                 recSet4.DoQuery(
                     "select DocEntry, SUM(LcPrices) as SumLCPayments from ( select  ORCT.DocEntry as 'DocEntry',  SUM(case when AppliedFC = 0 then RCT2.SumApplied else 0 end ) as 'LcPrices' from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" +
-                    ORCTDocEntrys +
+                    orctDocEntrys +
                     ") group by  RCT2.SumApplied , ORCT.DocEntry ) LcPricesTable group by DocEntry");
 
                 Dictionary<string, decimal> DocumentLcPriceSums = new Dictionary<string, decimal>();
                 while (!recSet4.EoF)
                 {
-                    string OCRTDocEntry = recSet4.Fields.Item("DocEntry").Value.ToString();
-                    decimal SumLCPayments = decimal.Parse(recSet4.Fields.Item("SumLCPayments").Value.ToString());
-                    DocumentLcPriceSums.Add(OCRTDocEntry, SumLCPayments);
+                    string ocrtDocEntry = recSet4.Fields.Item("DocEntry").Value.ToString();
+                    decimal sumLcPayments = decimal.Parse(recSet4.Fields.Item("SumLCPayments").Value.ToString());
+                    DocumentLcPriceSums.Add(ocrtDocEntry, sumLcPayments);
                     recSet4.MoveNext();
-
                     // აქ არის ლოკალურ ვალუტაში გატარებულ დოკუმენტებზე გადახდილი სტრული თანხა  
                 }
 
-
                 Dictionary<string, decimal> rateByDocuments = new Dictionary<string, decimal>();
 
-                List<XContainer> DocsWithRateAndValue = new List<XContainer>();
+                List<XContainer> docsWithRateAndValue = new List<XContainer>();
 
                 foreach (var tuple in sumPayments)
                 {
@@ -951,7 +356,7 @@ namespace DownPaymentLogic
 
                     rateByDocuments.Add(paymentDocEntry, rate);
 
-                    DocsWithRateAndValue.Add(new XContainer()
+                    docsWithRateAndValue.Add(new XContainer()
                     {
                         CurrRate = rate,
                         OrctDocEntry = paymentDocEntry
@@ -973,7 +378,7 @@ namespace DownPaymentLogic
                 Recordset recSet3 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                 recSet3.DoQuery(
                     "select ORCT.DocEntry, RCT2.DocEntry as 'DpDocEntry',    RCT2.AppliedFC from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry  in ( " +
-                    ORCTDocEntrys + ") and RCT2.DocEntry = '" + downPaymentDocEntry + "' and InvType = 203");
+                    orctDocEntrys + ") and RCT2.DocEntry = '" + downPaymentDocEntry + "' and InvType = 203");
 
 
                 Dictionary<string, decimal> dPIncomingPaymentShareAmountFc = new Dictionary<string, decimal>();
@@ -983,33 +388,21 @@ namespace DownPaymentLogic
                     string PaymentDocEntry = recSet3.Fields.Item("DocEntry").Value.ToString();
                     dPIncomingPaymentShareAmountFc.Add(PaymentDocEntry, AppliedFcbyDp);
 
-                    DocsWithRateAndValue.Where(z => z.OrctDocEntry == PaymentDocEntry).ToList()
+                    docsWithRateAndValue.Where(z => z.OrctDocEntry == PaymentDocEntry).ToList()
                         .ForEach(s => s.AmountFC = AppliedFcbyDp);
-
-
                     recSet3.MoveNext();
                 }
 
-                //var rata = DocsWithRateAndValue.
-
-                decimal LCSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC * doc.CurrRate);
-                decimal FCSum = DocsWithRateAndValue.Sum(doc => doc.AmountFC);
-                sendRate = LCSum / FCSum;
-
-
-
+                decimal lcSum = docsWithRateAndValue.Sum(doc => doc.AmountFC * doc.CurrRate);
+                decimal fcSum = docsWithRateAndValue.Sum(doc => doc.AmountFC);
+                sendRate = lcSum / fcSum;
             }
-
-
 
             paidAmountDpLc += sendRate * netAmountToDrow;
             paidAmountDpFc += netAmountToDrow;
-
             string globalRate = string.Empty;
             CalculateWaightedRate(totalInv, /*ref x,*/ ref globalRate, ratInv, ref paidAmountDpLc, paidAmountDpFc);
-
             return decimal.Parse(globalRate);
-
         }
 
         public static void AddJournalEntryCredit(SAPbobsCOM.Company _comp, string creditCode, string debitCode,
@@ -1040,8 +433,8 @@ namespace DownPaymentLogic
             vJE.Lines.BPLID = BPLID;
             vJE.Lines.ControlAccount = creditCode;
             vJE.Lines.ShortName = code;
-            vJE.Lines.Debit = 0;
-            vJE.Lines.Credit = amount;
+            vJE.Lines.Debit = -amount;
+            vJE.Lines.Credit = 0;
             vJE.Lines.FCCredit = 0;
             vJE.Lines.FCDebit = 0;
             vJE.Lines.Add();
@@ -1071,17 +464,13 @@ namespace DownPaymentLogic
             {
                 return;
             }
-            else
-            {
-                string des = _comp.GetLastErrorDescription();
-                SAPbouiCOM.Framework.Application.SBO_Application.SetStatusBarMessage(des + " Invoice " + reference, BoMessageTime.bmt_Short);
-            }
+            string des = _comp.GetLastErrorDescription();
+            SAPbouiCOM.Framework.Application.SBO_Application.MessageBox(des + " Invoice " + reference);
         }
 
         public static void AddJournalEntryDebit(SAPbobsCOM.Company _comp, string creditCode, string debitCode,
             double amount, int series, string reference, string code, DateTime DocDate, int BPLID = 235, string vatAccount = "", double vatAmount = 0, string vatGroup = "")
         {
-
             SAPbobsCOM.JournalEntries vJE =
                 (SAPbobsCOM.JournalEntries)_comp.GetBusinessObject(SAPbobsCOM.BoObjectTypes.oJournalEntries);
             vJE.ReferenceDate = DocDate;
@@ -1094,17 +483,18 @@ namespace DownPaymentLogic
             vJE.TransactionCode = "1";
 
             vJE.Lines.BPLID = BPLID; //branch
-            vJE.Lines.Credit = amount;
+            vJE.Lines.Credit = -amount;
             vJE.Lines.Debit = 0;
             vJE.Lines.AccountCode = creditCode;
             vJE.Lines.FCCredit = 0;
             vJE.Lines.FCDebit = 0;
             vJE.Lines.Add();
+
             vJE.Lines.BPLID = BPLID;
             vJE.Lines.AccountCode = debitCode;
             vJE.Lines.ShortName = code;
-            vJE.Lines.Credit = 0;
-            vJE.Lines.Debit = amount;
+            vJE.Lines.Credit = amount;
+            vJE.Lines.Debit = 0;
             vJE.Lines.FCCredit = 0;
             vJE.Lines.FCDebit = 0;
             // vJE.Series = 17;
@@ -1113,7 +503,7 @@ namespace DownPaymentLogic
             {
                 vJE.Lines.BPLID = BPLID;
                 vJE.Lines.AccountCode = creditCode;
-                vJE.Lines.Debit = vatAmount;
+                vJE.Lines.Debit = -vatAmount;
                 vJE.Lines.Credit = 0;
                 vJE.Lines.FCCredit = 0;
                 vJE.Lines.FCDebit = 0;
@@ -1123,7 +513,7 @@ namespace DownPaymentLogic
                 vJE.Lines.AccountCode = vatAccount;
                 vJE.Lines.TaxGroup = vatGroup;
                 vJE.Lines.Debit = 0;
-                vJE.Lines.Credit = vatAmount;
+                vJE.Lines.Credit = -vatAmount;
                 vJE.Lines.FCCredit = 0;
                 vJE.Lines.FCDebit = 0;
                 vJE.Lines.Add();
@@ -1135,14 +525,11 @@ namespace DownPaymentLogic
             {
                 return;
             }
-            else
-            {
-                string des = _comp.GetLastErrorDescription();
-                SAPbouiCOM.Framework.Application.SBO_Application.SetStatusBarMessage(des + " Invoice " + reference, BoMessageTime.bmt_Short);
-            }
+            string des = _comp.GetLastErrorDescription();
+            SAPbouiCOM.Framework.Application.SBO_Application.MessageBox(des + " Invoice " + reference);
         }
 
-        public static Dictionary<int, string> FormToTransId = new Dictionary<int, string>()
+        private static Dictionary<int, string> FormToTransId = new Dictionary<int, string>()
         {
             {133, "13"},
             {141, "18"}
@@ -1165,45 +552,63 @@ namespace DownPaymentLogic
 
             recSetDeter.DoQuery($"select * from OACP where Year(OACP.FinancYear) =  {DateTime.Now.Year}");
             string transitAccount = recSetDeter.Fields.Item("PurcVatOff").Value.ToString();
+            string dpmControlAcc = recSetDeter.Fields.Item("VDownPymnt").Value.ToString();
 
 
             recSetNew.DoQuery($"select * from PCH9 where DocEntry = {docNumber}");
-            var dpm = recSetNew.Fields.Item("BaseAbs").Value.ToString();
-            recSetNew.DoQuery($"SELECT transid FROM ODPO WHERE DocEntry = {dpm}");
-            var transid = recSetNew.Fields.Item("transid").Value;
-            decimal drFc = 0;
-            decimal dr = 0;
-            decimal cr = 0;
-            decimal crFc = 0;
-            if (transid != null && transid.ToString() != "0")
+
+            List<KeyValuePair<string, string>> vatGroupAndAccount = new List<KeyValuePair<string, string>>();
+            List<string> transides = new List<string>();
+
+            while (!recSetNew.EoF)
             {
+                var dpm = recSetNew.Fields.Item("BaseAbs").Value.ToString();
 
-                recSetJdt.DoQuery($"SELECT * FROM JDT1 WHERE TransId = {transid}");
-                while (!recSetJdt.EoF)
+                recSetNew.DoQuery($"SELECT transid FROM ODPO WHERE DocEntry = {dpm}");
+                var transid = recSetNew.Fields.Item("transid").Value;
+                if (transid != null && transid.ToString() != "0")
                 {
-
-                    if (recSetJdt.Fields.Item("Account").Value.ToString() == transitAccount)
+                    transides.Add(transid.ToString());
+                    recSetJdt.DoQuery($"SELECT * FROM JDT1 WHERE TransId = {transid}");
+                    while (!recSetJdt.EoF)
                     {
-                        recSetJdt.MoveNext();
-                    }
-                    else
-                    {
-                        dr = decimal.Parse(recSetJdt.Fields.Item("Debit").Value.ToString());
-                        drFc = decimal.Parse(recSetJdt.Fields.Item("FCDebit").Value.ToString());
-                        cr = decimal.Parse(recSetJdt.Fields.Item("Credit").Value.ToString());
-                        crFc = decimal.Parse(recSetJdt.Fields.Item("FCCredit").Value.ToString());
-                        vatAccountDownPayment = recSetJdt.Fields.Item("Account").Value.ToString();
-                        vatGroup = recSetJdt.Fields.Item("VatGroup").Value.ToString();
-                        break;
+                        if (recSetJdt.Fields.Item("Account").Value.ToString() == transitAccount)
+                        {
+                            recSetJdt.MoveNext();
+                        }
+                        else
+                        {
+                            vatAccountDownPayment = recSetJdt.Fields.Item("Account").Value.ToString();
+                            vatGroup = recSetJdt.Fields.Item("VatGroup").Value.ToString();
+                            vatGroupAndAccount.Add(new KeyValuePair<string, string>(vatGroup, vatAccountDownPayment));
+                            break;
+                        }
                     }
                 }
+                recSetNew.MoveNext();
             }
 
-            decimal vatAmountDownPayment = dr + cr;
-            decimal vatAmountDownPaymentFc = drFc + crFc;
+            recSet.DoQuery(@"SELECT DebPayAcct, 
+            CRD3.AcctType,
+            CRD3.AcctCode
+                FROM OCRD
+                JOIN CRD3 ON OCRD.CardCode = CRD3.CardCode where OCRD.CardCode = '" + businesPartnerCardCode + "'");
 
-            recSet.DoQuery("select DebPayAcct from OCRD where CardCode = '" + businesPartnerCardCode + "'");
-            string BpControlAcc = recSet.Fields.Item("DebPayAcct").Value.ToString();
+            string bpControlAcc = recSet.Fields.Item("DebPayAcct").Value.ToString();
+
+
+            while (!recSet.EoF)
+            {
+                var acctType = recSet.Fields.Item("AcctType").Value.ToString();
+                var acctCode = recSet.Fields.Item("AcctCode").Value.ToString();
+                if (acctType == "D")
+                {
+                    dpmControlAcc = acctCode;
+                }
+                recSet.MoveNext();
+            }
+
+
             if (!string.IsNullOrWhiteSpace(applied))
             {
                 var objRS = (SAPbobsCOM.Recordset)(_comp).GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
@@ -1232,7 +637,15 @@ namespace DownPaymentLogic
                 int bplID = Convert.ToInt32(objRS234.Fields.Item("BPLId").Value);
 
 
-                while (!objRS.EoF && transid != null && transid.ToString() != "0")
+                decimal dpmTotalWeightedRateInvAp = 0;
+                decimal dpmTotalOriginalRateAp = 0;
+                decimal dpmVatTotalOriginalRateAp = 0;
+
+                decimal dpmTotalWeightedRateInvAr = 0;
+                decimal dpmTotalOriginalRateAr = 0;
+                decimal dpmVatTotalOriginalRateAr = 0;
+
+                while (!objRS.EoF)
                 {
                     bool difCalculated = false;
                     bool exchangeRateCalculated = false;
@@ -1242,35 +655,63 @@ namespace DownPaymentLogic
                     decimal invCreditFc = decimal.Parse(objRS.Fields.Item("FCCredit").Value.ToString());
                     decimal invCredit = decimal.Parse(objRS.Fields.Item("Credit").Value.ToString());
                     decimal invDebit = decimal.Parse(objRS.Fields.Item("Debit").Value.ToString());
+                    var defauKeyValuePair = default(KeyValuePair<string, string>);
 
-
-                    if (invAcc == vatAccountDownPayment && invvatGroup == vatGroup && Math.Abs(invCreditFc) == vatAmountDownPaymentFc)
+                    if (invAcc == bpControlAcc && invDebit != 0)
                     {
-                        vatAmountInvDpm = invCredit + invDebit;
-                        difCalculated = true;
+                        dpmTotalWeightedRateInvAp = invDebit;
                     }
+
+                    if (invAcc == dpmControlAcc && invCredit != 0)
+                    {
+                        dpmTotalOriginalRateAp += invCredit;
+                    }
+
+                    if (vatGroupAndAccount.FirstOrDefault(acc => acc.Value == invAcc).Equals(defauKeyValuePair) && vatGroupAndAccount.FirstOrDefault(vatGr => vatGr.Key == invvatGroup).Equals(defauKeyValuePair))
+                    {
+                        dpmVatTotalOriginalRateAp += invCredit;
+                    }
+
                     if (invAcc == ExchangeGain || invAcc == ExchangeLoss)
                     {
                         exchangeRateAmount = invCredit + invDebit;
-                        exchangeRateCalculated = true;
+                    }
+                    ///////////////////////////////////////////////////////
+                    if (invAcc == bpControlAcc && invCredit != 0)
+                    {
+                        dpmTotalWeightedRateInvAr = invCredit;
                     }
 
-                    if (invAcc == transitAccount)
+                    if (invAcc == dpmControlAcc && invDebit != 0)
                     {
-                        invTransitAmount = invDebit + invCredit;
-                        transitCalculated = true;
+                        dpmTotalOriginalRateAr += invDebit;
                     }
-                    if (exchangeRateCalculated && difCalculated && transitCalculated)
+
+                    if (vatGroupAndAccount.FirstOrDefault(acc => acc.Value == invAcc).Equals(defauKeyValuePair) && vatGroupAndAccount.FirstOrDefault(vatGr => vatGr.Key == invvatGroup).Equals(defauKeyValuePair))
                     {
-                        break;
+                        dpmVatTotalOriginalRateAr += invDebit;
                     }
+
+                    if (invAcc == ExchangeGain || invAcc == ExchangeLoss)
+                    {
+                        exchangeRateAmount = invCredit + invDebit;
+                    }
+
                     objRS.MoveNext();
                 }
 
-                vatDifferenceBetweenDpmInv = invTransitAmount - vatAmountInvDpm;
-                correctionAmount = exchangeRateAmount - vatDifferenceBetweenDpmInv;
 
+                decimal receivibleCancellationAmountAp = dpmTotalWeightedRateInvAp - dpmTotalOriginalRateAp;
+                decimal receivibleCancellationAmountAr = dpmTotalOriginalRateAp - dpmTotalWeightedRateInvAp;
+                decimal vatCencellationAmountApGain = receivibleCancellationAmountAp - exchangeRateAmount;
+                decimal vatCencellationAmountApLoss = receivibleCancellationAmountAp + exchangeRateAmount;
+                decimal vatCencellationAmountAr = receivibleCancellationAmountAr - exchangeRateAmount;
 
+                bool validation = dpmVatTotalOriginalRateAp == vatCencellationAmountApGain;
+                if (validation)
+                {
+                    Application.SBO_Application.MessageBox("გადაამოწმეთ შექმნილი გატარება");
+                }
 
                 Recordset recSet12 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                 recSet12.DoQuery("select Series from NNM1 where ObjectCode = 30 and Locked = 'N' and BPLId is  null");
@@ -1288,70 +729,35 @@ namespace DownPaymentLogic
 
                     if (FormType.ToString() == "133")
                     {
-                        if (transid != null && transid.ToString() != "0")
+                        if (account == ExchangeGain)
                         {
-                            if (account == ExchangeGain)
-                            {
-                                AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
-                                    Convert.ToDouble(objRS.Fields.Item("Credit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate,
-                                    bplID, vatAccountDownPayment, Convert.ToDouble(correctionAmount), vatGroup);
+                            AddJournalEntryCredit(_comp, bpControlAcc, ExchangeGain,
+                                Convert.ToDouble(vatCencellationAmountAr), series, docNumber, businesPartnerCardCode, docDate,
+                                bplID, vatGroupAndAccount.FirstOrDefault().Value, Convert.ToDouble(vatCencellationAmountAr), vatGroupAndAccount.FirstOrDefault().Key);
 
-                            }
-                            else if (account == ExchangeLoss)
-                            {
-                                AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
-                                    Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID, vatAccountDownPayment, Convert.ToDouble(correctionAmount), vatGroup);
-                            }
                         }
-                        else
+                        else if (account == ExchangeLoss)
                         {
-                            if (account == ExchangeGain)
-                            {
-                                AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
-                                    Convert.ToDouble(objRS.Fields.Item("Credit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate,
-                                    bplID);
-
-                            }
-                            else if (account == ExchangeLoss)
-                            {
-                                AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
-                                    Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
-                            }
+                            AddJournalEntryDebit(_comp, bpControlAcc, ExchangeGain,
+                                Convert.ToDouble(vatCencellationAmountAr), series, docNumber, businesPartnerCardCode, docDate,
+                                bplID, vatGroupAndAccount.FirstOrDefault().Value, Convert.ToDouble(vatCencellationAmountAr), vatGroupAndAccount.FirstOrDefault().Key);
                         }
 
                     }
                     else if (FormType.ToString() == "141")
                     {
-                        if (transid != null && transid.ToString() != "0")
+                        if (account == ExchangeGain)
                         {
-                            if (account == ExchangeGain)
-                            {
-                                AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
-                                    Convert.ToDouble(correctionAmount), series, docNumber, businesPartnerCardCode, docDate,
-                                    bplID, vatAccountDownPayment, Convert.ToDouble(correctionAmount - exchangeRateAmount), vatGroup);
-
-                            }
-                            else if (account == ExchangeLoss)
-                            {
-                                AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
-                                   Convert.ToDouble(vatDifferenceBetweenDpmInv + exchangeRateAmount), series, docNumber, businesPartnerCardCode, docDate, bplID, vatAccountDownPayment, Convert.ToDouble(vatDifferenceBetweenDpmInv), vatGroup);
-                            }
+                            AddJournalEntryCredit(_comp, bpControlAcc, ExchangeGain,
+                                Convert.ToDouble(receivibleCancellationAmountAp), series, docNumber, businesPartnerCardCode, docDate,
+                                bplID, vatGroupAndAccount.FirstOrDefault().Value, Convert.ToDouble(vatCencellationAmountApGain), vatGroupAndAccount.FirstOrDefault().Key);
                         }
-                        else
+                        else if (account == ExchangeLoss)
                         {
-                            if (account == ExchangeGain)
-                            {
-                                AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
-                                    Convert.ToDouble(objRS.Fields.Item("Credit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate,
-                                    bplID);
-                            }
-                            else if (account == ExchangeLoss)
-                            {
-                                AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
-                                    Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
-                            }
+                            AddJournalEntryDebit(_comp, ExchangeLoss, bpControlAcc,
+                                Convert.ToDouble(receivibleCancellationAmountAp), series, docNumber, businesPartnerCardCode, docDate, bplID,
+                                 vatGroupAndAccount.FirstOrDefault().Value, Convert.ToDouble(vatCencellationAmountApLoss), vatGroupAndAccount.FirstOrDefault().Key);
                         }
-
                     }
 
                     objRS.MoveNext();
@@ -1366,32 +772,31 @@ namespace DownPaymentLogic
             recSet.DoQuery("select DebPayAcct from OCRD where CardCode = '" + businesPartnerCardCode + "'");
             string BpControlAcc = recSet.Fields.Item("DebPayAcct").Value.ToString();
 
-            var objRS = (SAPbobsCOM.Recordset)(_comp).GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
-            objRS.DoQuery(@"select * from OJDT where baseRef = " + docNumber + " and TransType = " +
+            var objRs = (SAPbobsCOM.Recordset)(_comp).GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
+            objRs.DoQuery(@"select * from OJDT where baseRef = " + docNumber + " and TransType = " +
                           FormToTransId[FormType] + "");
-            objRS.MoveFirst();
-            var x = objRS.Fields.Item("TransType").Value.ToString();
+            objRs.MoveFirst();
+            var x = objRs.Fields.Item("TransType").Value.ToString();
 
-            if (objRS.Fields.Item("TransType").Value.ToString() != "13" &&
-                objRS.Fields.Item("TransType").Value.ToString() != "18")
+            if (objRs.Fields.Item("TransType").Value.ToString() != "13" &&
+                objRs.Fields.Item("TransType").Value.ToString() != "18")
             {
-                objRS.MoveNext();
+                objRs.MoveNext();
             }
-            var transID = objRS.Fields.Item("TransId").Value.ToString();
-            objRS.DoQuery(@"select * from JDT1 where TransId = " + transID);
-            var objRS234 = (SAPbobsCOM.Recordset)(_comp).GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
+            var transId = objRs.Fields.Item("TransId").Value.ToString();
+            objRs.DoQuery(@"select * from JDT1 where TransId = " + transId);
+            var objRs234 = (SAPbobsCOM.Recordset)(_comp).GetBusinessObject(SAPbobsCOM.BoObjectTypes.BoRecordset);
 
-            if (objRS.Fields.Item("TransType").Value.ToString() != "13")
+            if (objRs.Fields.Item("TransType").Value.ToString() != "13")
             {
-                objRS234.DoQuery("select  BPLId from OPCH where BPLName = '" + bplName + "'");
+                objRs234.DoQuery("select  BPLId from OPCH where BPLName = '" + bplName + "'");
             }
-            else if (objRS.Fields.Item("TransType").Value.ToString() != "18")
+            else if (objRs.Fields.Item("TransType").Value.ToString() != "18")
             {
-                objRS234.DoQuery("select  BPLId from OINV where BPLName = '" + bplName + "'");
+                objRs234.DoQuery("select  BPLId from OINV where BPLName = '" + bplName + "'");
             }
 
-            int bplID = Convert.ToInt32(objRS234.Fields.Item("BPLId").Value);
-
+            int bplID = Convert.ToInt32(objRs234.Fields.Item("BPLId").Value);
             Recordset recSet12 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
             recSet12.DoQuery("select Series from NNM1 where ObjectCode = 30 and Locked = 'N' and BPLId is  null");
             int series = int.Parse(recSet12.Fields.Item("Series").Value.ToString());
@@ -1401,23 +806,22 @@ namespace DownPaymentLogic
                 bplID = 235;
             }
 
-            while (!objRS.EoF)
+            while (!objRs.EoF)
             {
-                var account = objRS.Fields.Item("Account").Value.ToString();
+                var account = objRs.Fields.Item("Account").Value.ToString();
 
                 if (FormType.ToString() == "133")
                 {
                     if (account == ExchangeGain)
                     {
                         AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
-                            Convert.ToDouble(objRS.Fields.Item("Credit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate,
+                            Convert.ToDouble(objRs.Fields.Item("Credit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate,
                             bplID);
-
                     }
                     else if (account == ExchangeLoss)
                     {
                         AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
-                            Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
+                            Convert.ToDouble(objRs.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
                     }
                 }
                 else if (FormType.ToString() == "141")
@@ -1425,22 +829,17 @@ namespace DownPaymentLogic
                     if (account == ExchangeGain)
                     {
                         AddJournalEntryCredit(_comp, BpControlAcc, ExchangeGain,
-                            Convert.ToDouble(objRS.Fields.Item("Credit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate,
+                            Convert.ToDouble(objRs.Fields.Item("Credit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate,
                             bplID);
                     }
                     else if (account == ExchangeLoss)
                     {
                         AddJournalEntryDebit(_comp, ExchangeLoss, BpControlAcc,
-                            Convert.ToDouble(objRS.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
+                            Convert.ToDouble(objRs.Fields.Item("Debit").Value.ToString()), series, docNumber, businesPartnerCardCode, docDate, bplID);
                     }
                 }
-
-                objRS.MoveNext();
+                objRs.MoveNext();
             }
-
-
         }
-
-
     }
 }

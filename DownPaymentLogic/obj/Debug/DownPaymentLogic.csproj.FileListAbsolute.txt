@@ -7,6 +7,6 @@ D:\Users\nkurdadze\Desktop\DPCorrection Code\DP Correction Main\DownPaymentCorre
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\DownPaymentLogic\bin\Debug\DownPaymentLogic.dll
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\DownPaymentLogic\bin\Debug\DownPaymentLogic.pdb
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\DownPaymentLogic\bin\Debug\SAPBusinessOneSDK.dll
-D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\DownPaymentLogic\obj\Debug\DownPaymentLogic.csprojResolveAssemblyReference.cache
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\DownPaymentLogic\obj\Debug\DownPaymentLogic.dll
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\DownPaymentLogic\obj\Debug\DownPaymentLogic.pdb
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\DownPaymentLogic\obj\Debug\DownPaymentLogic.csprojResolveAssemblyReference.cache
