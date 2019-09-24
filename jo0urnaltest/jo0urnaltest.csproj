@@ -41,6 +41,10 @@
     <StartupObject>jo0urnaltest.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Appocalypto, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Appocalypto.1.1.0\lib\net452\Appocalypto.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="SAPApi">
       <HintPath>D:\Users\nkurdadze\Documents\Visual Studio 2015\Projects\RevServices_RS.GE\SAPApi\obj\Debug\SAPApi.dll</HintPath>
     </Reference>
@@ -93,6 +97,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Menu.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DownPaymentLogic\DownPaymentLogic.csproj">

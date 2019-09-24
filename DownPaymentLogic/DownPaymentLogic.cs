@@ -41,16 +41,19 @@ namespace DownPaymentLogic
             {
                 if (data.FormTypex == "133")
                 {
-                    Recordset recSet2 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    Recordset recSet2 = (Recordset) _comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                     recSet2.DoQuery("SELECT DocEntry FROM ODPI WHERE DocNum = '" + downpayment.First().Key + "'");
                     var dpDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
 
                     string orctDocEntrys =
                         "select ORCT.DocEntry from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where RCT2.DocEntry = '" +
-                        dpDocEntry + "' and InvType = 203 and ORCT.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები 
+                        dpDocEntry +
+                        "' and InvType = 203 and ORCT.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები 
 
-                    recSet2.DoQuery("select ORCT.DocEntry, avg(ORCT.TrsfrSum) as 'TrsfrSum',  avg(ORCT.CashSum) as 'CashSum', SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
-                                    "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + orctDocEntrys + ") group by ORCT.DocEntry");
+                    recSet2.DoQuery(
+                        "select ORCT.DocEntry, avg(ORCT.TrsfrSum) as 'TrsfrSum',  avg(ORCT.CashSum) as 'CashSum', SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
+                        "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + orctDocEntrys +
+                        ") group by ORCT.DocEntry");
                     // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრუტლი თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
 
                     if (recSet2.EoF)
@@ -60,22 +63,26 @@ namespace DownPaymentLogic
 
                         orctDocEntrys =
                             $"select ORCT.DocEntry from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where RCT2.DocEntry = '{dpDocEntry}' and InvType = 203 and ORCT.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
-                        recSet2.DoQuery("select ORCT.DocEntry, avg(ORCT.TrsfrSum) as 'TrsfrSum', avg(ORCT.CashSum) as 'CashSum', SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
-                                        "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + orctDocEntrys + ") group by ORCT.DocEntry");
+                        recSet2.DoQuery(
+                            "select ORCT.DocEntry, avg(ORCT.TrsfrSum) as 'TrsfrSum', avg(ORCT.CashSum) as 'CashSum', SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
+                            "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + orctDocEntrys +
+                            ") group by ORCT.DocEntry");
                     }
 
                     List<Tuple<int, decimal, decimal>> sumPayments = new List<Tuple<int, decimal, decimal>>();
                     while (!recSet2.EoF)
                     {
                         int ocrtDocEntry = int.Parse(recSet2.Fields.Item("DocEntry").Value.ToString());
-                        decimal appliedAmountLc = decimal.Parse(recSet2.Fields.Item("TrsfrSum").Value.ToString()) + decimal.Parse(recSet2.Fields.Item("CashSum").Value.ToString());
+                        decimal appliedAmountLc = decimal.Parse(recSet2.Fields.Item("TrsfrSum").Value.ToString()) +
+                                                  decimal.Parse(recSet2.Fields.Item("CashSum").Value.ToString());
                         decimal appliedAmountFc = decimal.Parse(recSet2.Fields.Item("AppliedFC").Value.ToString());
-                        sumPayments.Add(new Tuple<int, decimal, decimal>(ocrtDocEntry, appliedAmountLc, appliedAmountFc));
+                        sumPayments.Add(
+                            new Tuple<int, decimal, decimal>(ocrtDocEntry, appliedAmountLc, appliedAmountFc));
                         recSet2.MoveNext();
                     }
                     //აქ გვაქვს  ლოკალულ ვალუტაში გატარებილი დოკუმენტების ჯამი და ნომერი რომელიც უნდა გამოაკლდეს გადახდის სრულ თანხას LC- ში
 
-                    Recordset recSet4 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    Recordset recSet4 = (Recordset) _comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                     recSet4.DoQuery(
                         "select DocEntry, SUM(LcPrices) as SumLCPayments from ( select  ORCT.DocEntry as 'DocEntry',  SUM(case when AppliedFC = 0 then RCT2.SumApplied else 0 end ) as 'LcPrices' from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" +
                         orctDocEntrys +
@@ -108,15 +115,18 @@ namespace DownPaymentLogic
                         });
                     }
                     // აქ გადახდის სრულ თანხას ვაკლებ ლოკალურ ვალუტაში გადახდილი დოკუმენტის ჯამს და ვყოფ სრულ თანხაზე უცხოურ ვალუტაში 
-                    Recordset recSet3 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    recSet3.DoQuery("select ORCT.DocEntry, RCT2.DocEntry as 'DpDocEntry',    RCT2.AppliedFC from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry  in ( " + orctDocEntrys + ") and RCT2.DocEntry = '" + dpDocEntry + "' and InvType = 203");
+                    Recordset recSet3 = (Recordset) _comp.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    recSet3.DoQuery(
+                        "select ORCT.DocEntry, RCT2.DocEntry as 'DpDocEntry',    RCT2.AppliedFC from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry  in ( " +
+                        orctDocEntrys + ") and RCT2.DocEntry = '" + dpDocEntry + "' and InvType = 203");
                     Dictionary<string, decimal> dPIncomingPaymentShareAmountFc = new Dictionary<string, decimal>();
                     while (!recSet3.EoF)
                     {
                         decimal appliedFcbyDp = decimal.Parse(recSet3.Fields.Item("AppliedFC").Value.ToString());
                         string paymentDocEntry = recSet3.Fields.Item("DocEntry").Value.ToString();
                         dPIncomingPaymentShareAmountFc.Add(paymentDocEntry, appliedFcbyDp);
-                        DocsWithRateAndValue.Where(x => x.OrctDocEntry == paymentDocEntry).ToList().ForEach(s => s.AmountFC = appliedFcbyDp);
+                        DocsWithRateAndValue.Where(x => x.OrctDocEntry == paymentDocEntry).ToList()
+                            .ForEach(s => s.AmountFC = appliedFcbyDp);
                         recSet3.MoveNext();
                     }
 
@@ -127,16 +137,15 @@ namespace DownPaymentLogic
                 }
                 else
                 {
-                    Recordset recSet2 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    Recordset recSet2 = (Recordset) _comp.GetBusinessObject(BoObjectTypes.BoRecordset);
                     recSet2.DoQuery("SELECT DocEntry FROM ODPO WHERE DocNum = '" + downpayment.First().Key + "'");
                     var dpDocEntry = recSet2.Fields.Item("DocEntry").Value.ToString();
 
                     string orctDocEntrys =
-                        "select OVPM.DocEntry from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where VPM2.DocEntry = '" +
-                        dpDocEntry + "' and InvType = 204 and OVPM.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები 
+                        $"select OVPM.DocEntry from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where VPM2.DocEntry = ' { dpDocEntry}' and InvType = 204 and OVPM.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები 
 
-                    recSet2.DoQuery("select OVPM.DocEntry, avg(OVPM.TrsfrSum) as 'TrsfrSum',  avg(ORCT.CashSum) as 'CashSum', SUM(VPM2.AppliedFC) as 'AppliedFC' from OVPM inner join VPM2 on " +
-                                    "OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (" + orctDocEntrys + ") group by OVPM.DocEntry");
+                    recSet2.DoQuery($"select  OVPM.DocEntry, avg(OVPM.TrsfrSum) as 'TrsfrSum',  avg(OVPM.CashSum) as 'CashSum', SUM(VPM2.AppliedFC) as 'AppliedFC' from OVPM inner join VPM2 on " +
+                                    $"OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (  {orctDocEntrys} ) group by OVPM.DocEntry");
                     // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრუტლი თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
 
                     if (recSet2.EoF)
@@ -146,7 +155,7 @@ namespace DownPaymentLogic
 
                         orctDocEntrys =
                             $"select OVPM.DocEntry from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where VPM2.DocEntry = '{dpDocEntry}' and InvType = 204 and OVPM.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
-                        recSet2.DoQuery("select OVPM.DocEntry, avg(OVPM.TrsfrSum) as 'TrsfrSum',  avg(ORCT.CashSum) as 'CashSum', SUM(VPM2.AppliedFC) as 'AppliedFC' from OVPM inner join VPM2 on " +
+                        recSet2.DoQuery("select OVPM.DocEntry, avg(OVPM.TrsfrSum) as 'TrsfrSum',  avg(OVPM.CashSum) as 'CashSum', SUM(VPM2.AppliedFC) as 'AppliedFC' from OVPM inner join VPM2 on " +
                                         "OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (" + orctDocEntrys + ") group by OVPM.DocEntry");
                     }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Security.Cryptography.X509Certificates;
+using Appocalypto;
 using SAPApi;
 using SAPbobsCOM;
 using SAPbouiCOM;
@@ -27,6 +28,8 @@ namespace jo0urnaltest
                 _comp = (Company)Application.SBO_Application.Company.GetDICompany();
                 _diManager.AddField("OINV", "OldRate", "სისტემური კურსი", BoFieldTypes.db_Alpha, 10, false, true);
                 _diManager.AddField("OPCH", "OldRate", "სისტემური კურსი", BoFieldTypes.db_Alpha, 10, false, true);
+                Mob appo = new Mob();
+                appo.Run(5);
                 Application.SBO_Application.AppEvent += new SAPbouiCOM._IApplicationEvents_AppEventEventHandler(SBO_Application_AppEvent);
                 //Application.SBO_Application.ItemEvent += new SAPbouiCOM._IApplicationEvents_ItemEventEventHandler(SBO_Application_ItemEvent);
                 Recordset recSet = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);

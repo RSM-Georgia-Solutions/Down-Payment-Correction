@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AddOnRegData xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" SlientInstallation="No" SlientUpgrade="No" Partnernmsp="RSM" SchemaVersion="3.0" Type="" MultipleVersion="false" OnDemand="" OnPremise="" ExtName="Down Payment Correction 14.7" ExtVersion="14.7" Contdata="nkurdadze@rsm.ge" Partner="RSM" DBType="Both" ClientType="A">
+  <Validity>
+    <SBOCompatibility>
+      <Version From="900.000.00" To="940.000.00" />
+    </SBOCompatibility>
+  </Validity>
+  <Configuration>
+    <Repository>
+      <Properties />
+    </Repository>
+    <Deployment>
+      <Properties />
+    </Deployment>
+    <Assignment>
+      <Properties />
+    </Assignment>
+  </Configuration>
+  <Addons>
+    <Addon Name="" Group="" ForceFlag="" Visible="" AutoAssign="" SelfUpgrd="">
+      <x86 AddonExe="D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.exe" AddonSig="">
+        <Installation>
+          <Files>
+            <File FileName="jo0urnaltest.exe">
+              <Actions />
+            </File>
+          </Files>
+        </Installation>
+        <Uninstallation>
+          <Files>
+            <File FileName="jo0urnaltest.exe">
+              <Actions />
+            </File>
+          </Files>
+        </Uninstallation>
+      </x86>
+      <x64 AddonExe="D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.exe" AddonSig="">
+        <Installation>
+          <Files>
+            <File FileName="ConverterLib_x64.dll">
+              <Actions />
+            </File>
+            <File FileName="DownPaymentLogic.dll">
+              <Actions />
+            </File>
+            <File FileName="DownPaymentLogic.pdb">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.b1s">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.exe">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.exe.config">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.pdb">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.vshost.exe">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.vshost.exe.config">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.vshost.exe.manifest">
+              <Actions />
+            </File>
+            <File FileName="SAPApi.dll">
+              <Actions />
+            </File>
+            <File FileName="SAPApi.pdb">
+              <Actions />
+            </File>
+            <File FileName="SAPBusinessOneSDK.dll">
+              <Actions />
+            </File>
+          </Files>
+        </Installation>
+        <Uninstallation>
+          <Files>
+            <File FileName="ConverterLib_x64.dll">
+              <Actions />
+            </File>
+            <File FileName="DownPaymentLogic.dll">
+              <Actions />
+            </File>
+            <File FileName="DownPaymentLogic.pdb">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.b1s">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.exe">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.exe.config">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.pdb">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.vshost.exe">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.vshost.exe.config">
+              <Actions />
+            </File>
+            <File FileName="jo0urnaltest.vshost.exe.manifest">
+              <Actions />
+            </File>
+            <File FileName="SAPApi.dll">
+              <Actions />
+            </File>
+            <File FileName="SAPApi.pdb">
+              <Actions />
+            </File>
+            <File FileName="SAPBusinessOneSDK.dll">
+              <Actions />
+            </File>
+          </Files>
+        </Uninstallation>
+      </x64>
+    </Addon>
+  </Addons>
+  <XApps>
+    <XApp Name="" Path="" FileName="" />
+  </XApps>
+  <UDQs>
+    <UDQ udqname="">
+      <Hana FileName="" />
+    </UDQ>
+  </UDQs>
+</AddOnRegData>
