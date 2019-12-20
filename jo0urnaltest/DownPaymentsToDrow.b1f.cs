@@ -91,8 +91,6 @@ namespace jo0urnaltest
                         });
                     }
                 }
-
-
                 try
                 {
                     var formCouples = SharedClass.ListOfDataForCalculationRates.First(x => x.FormUIdDps == downPaymentToDrowForm.UDFFormUID);
