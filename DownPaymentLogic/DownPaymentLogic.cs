@@ -326,7 +326,7 @@ namespace DownPaymentLogic
                     "select ORCT.DocEntry, avg(ORCT.TrsfrSum) as 'TrsfrSum' , SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
                     "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + orctDocEntrys +
                     ") group by ORCT.DocEntry");
-                // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრუტლი თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
+                // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრული თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
 
                 List<Tuple<int, decimal, decimal>> sumPayments = new List<Tuple<int, decimal, decimal>>();
                 while (!recSet2.EoF)
@@ -338,19 +338,51 @@ namespace DownPaymentLogic
                     recSet2.MoveNext();
                 }
 
-                //აქ გვაქვს  ლოკალულ ვალუტაში გატარებილი დოკუმენტების ჯამი და ნომერი რომელიც უნდა გამოაკლდეს გადახდის სრულ თანხას LC- ში
+                //აქ გვაქვს  ლოკალულ ვალუტაში გატარებილი დოკუმენტების ნომერი და ჯამი რომელიც უნდა გამოაკლდეს გადახდის სრულ თანხას LC- ში
 
                 Recordset recSet4 = (Recordset)_comp.GetBusinessObject(BoObjectTypes.BoRecordset);
-                recSet4.DoQuery(
-                    "select DocEntry, SUM(LcPrices) as SumLCPayments from ( select  ORCT.DocEntry as 'DocEntry',  SUM(case when AppliedFC = 0 then RCT2.SumApplied else 0 end ) as 'LcPrices' from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" +
-                    orctDocEntrys +
-                    ") group by  RCT2.SumApplied , ORCT.DocEntry ) LcPricesTable group by DocEntry");
+                //recSet4.DoQuery(
+                //    "select DocEntry, SUM(LcPrices) as SumLCPayments from ( select  ORCT.DocEntry as 'DocEntry',  SUM(case when AppliedFC = 0 then RCT2.SumApplied else 0 end ) as 'LcPrices' from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" +
+                //    orctDocEntrys +
+                //    ") group by  RCT2.SumApplied , ORCT.DocEntry ) LcPricesTable group by DocEntry");
+
+                recSet4.DoQuery($@"SELECT Old.DocEntry, AVG(SumLCPayments) as SumLCPayments, isnull(Max(TransCode),'-987') as TransCode
+                FROM
+                    (
+                    SELECT DocEntry,
+                SUM(LcPrices) AS SumLCPayments
+                FROM
+                    (
+                    SELECT ORCT.DocEntry AS 'DocEntry',
+                SUM(CASE
+                WHEN AppliedFC = 0
+                THEN RCT2.SumApplied
+                    ELSE 0
+                END) AS 'LcPrices'
+                FROM ORCT
+                INNER JOIN RCT2 ON ORCT.DocEntry = RCT2.DocNum
+                WHERE ORCT.DocEntry IN
+                    (
+                       {orctDocEntrys}
+                    )
+                GROUP BY RCT2.SumApplied,
+                ORCT.DocEntry
+                    ) LcPricesTable
+                    GROUP BY DocEntry
+                    ) Old
+                    JOIN RCT2 ON RCT2.DocNum = old.DocEntry
+                JOIN OJDT on OJDT.TransId = RCT2.DocEntry
+                GROUP BY  Old.DocEntry");
 
                 Dictionary<string, decimal> DocumentLcPriceSums = new Dictionary<string, decimal>();
                 while (!recSet4.EoF)
                 {
-                    string ocrtDocEntry = recSet4.Fields.Item("DocEntry").Value.ToString();
                     decimal sumLcPayments = decimal.Parse(recSet4.Fields.Item("SumLCPayments").Value.ToString());
+                    if (recSet4.Fields.Item("TransCode").Value.ToString() == "2")
+                    {
+                        sumLcPayments = 0;
+                    }
+                    string ocrtDocEntry = recSet4.Fields.Item("DocEntry").Value.ToString();
                     DocumentLcPriceSums.Add(ocrtDocEntry, sumLcPayments);
                     recSet4.MoveNext();
                     // აქ არის ლოკალურ ვალუტაში გატარებულ დოკუმენტებზე გადახდილი სტრული თანხა  
