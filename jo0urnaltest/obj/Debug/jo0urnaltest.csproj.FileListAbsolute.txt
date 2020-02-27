@@ -4,6 +4,7 @@ C:\Users\nkurdadze\Source\Repos\Down-Payment-Correction\jo0urnaltest\bin\Debug\j
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.exe.config
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.exe
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.pdb
+D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\Appocalypto.dll
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\DownPaymentLogic.dll
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\SAPApi.dll
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\SAPBusinessOneSDK.dll
@@ -13,4 +14,3 @@ D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.csprojResolveAssemblyReference.cache
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.exe
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.pdb
-D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin\Debug\Appocalypto.dll

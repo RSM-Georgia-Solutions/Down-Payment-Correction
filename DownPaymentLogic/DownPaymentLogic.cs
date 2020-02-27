@@ -48,7 +48,7 @@ namespace DownPaymentLogic
                         "' and InvType = 203 and ORCT.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები 
 
                     recSet2.DoQuery(
-                        "select ORCT.DocEntry, avg(ORCT.TrsfrSum) as 'TrsfrSum',  avg(ORCT.CashSum) as 'CashSum', SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
+                        "select ORCT.DocEntry, avg(ORCT.TrsfrSum) + avg(ORCT.CashSum) as 'TrsfrSum',  avg(ORCT.CashSum) as 'CashSum', SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
                         "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + orctDocEntrys +
                         ") group by ORCT.DocEntry");
                     // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრუტლი თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
@@ -61,7 +61,7 @@ namespace DownPaymentLogic
                         orctDocEntrys =
                             $"select ORCT.DocEntry from ORCT inner join RCT2 on ORCT.DocEntry = RCT2.DocNum where RCT2.DocEntry = '{dpDocEntry}' and InvType = 203 and ORCT.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
                         recSet2.DoQuery(
-                            "select ORCT.DocEntry, avg(ORCT.TrsfrSum) as 'TrsfrSum', avg(ORCT.CashSum) as 'CashSum', SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
+                            "select ORCT.DocEntry, avg(ORCT.TrsfrSum) + avg(ORCT.CashSum) as 'TrsfrSum', avg(ORCT.CashSum) as 'CashSum', SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
                             "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + orctDocEntrys +
                             ") group by ORCT.DocEntry");
                     }
@@ -141,7 +141,7 @@ namespace DownPaymentLogic
                     string orctDocEntrys =
                         $"select OVPM.DocEntry from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where VPM2.DocEntry = ' { dpDocEntry}' and InvType = 204 and OVPM.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები 
 
-                    recSet2.DoQuery($"select  OVPM.DocEntry, avg(OVPM.TrsfrSum) as 'TrsfrSum',  avg(OVPM.CashSum) as 'CashSum', SUM(VPM2.AppliedFC) as 'AppliedFC' from OVPM inner join VPM2 on " +
+                    recSet2.DoQuery($"select  OVPM.DocEntry,  avg(OVPM.TrsfrSum) + avg(OVPM.CashSum) as 'TrsfrSum',  avg(OVPM.CashSum) as 'CashSum', SUM(VPM2.AppliedFC) as 'AppliedFC' from OVPM inner join VPM2 on " +
                                     $"OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (  {orctDocEntrys} ) group by OVPM.DocEntry");
                     // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრუტლი თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
 
@@ -152,7 +152,7 @@ namespace DownPaymentLogic
 
                         orctDocEntrys =
                             $"select OVPM.DocEntry from OVPM inner join VPM2 on OVPM.DocEntry = VPM2.DocNum where VPM2.DocEntry = '{dpDocEntry}' and InvType = 204 and OVPM.Canceled = 'N'"; // ეს არის Incoming Paymentebis docentry -ები
-                        recSet2.DoQuery("select OVPM.DocEntry, avg(OVPM.TrsfrSum) as 'TrsfrSum',  avg(OVPM.CashSum) as 'CashSum', SUM(VPM2.AppliedFC) as 'AppliedFC' from OVPM inner join VPM2 on " +
+                        recSet2.DoQuery("select OVPM.DocEntry,avg(OVPM.TrsfrSum) + avg(OVPM.CashSum)  as 'TrsfrSum',  avg(OVPM.CashSum) as 'CashSum', SUM(VPM2.AppliedFC) as 'AppliedFC' from OVPM inner join VPM2 on " +
                                         "OVPM.DocEntry = VPM2.DocNum where OVPM.DocEntry in (" + orctDocEntrys + ") group by OVPM.DocEntry");
                     }
 
@@ -294,7 +294,7 @@ namespace DownPaymentLogic
                 var orctDocEntry = recSetTransferDocEntry.Fields.Item("DocEntry").Value.ToString();
 
                 recSerTranferRate.DoQuery(
-                    "select ORCT.TrsfrSum , RCT2.AppliedFC, RCT2.DocRate from ORCT inner join RCT2 on " +
+                    "select ORCT.TrsfrSum + ORCT.CashSum  as [TrsfrSum], RCT2.AppliedFC, RCT2.DocRate from ORCT inner join RCT2 on " +
                     "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry = '" + orctDocEntry + "'");
 
                 decimal transferSumLc = decimal.Parse(recSerTranferRate.Fields.Item("TrsfrSum").Value.ToString());
@@ -323,7 +323,7 @@ namespace DownPaymentLogic
                                        "' and InvType = 203 and ORCT.Canceled = 'N'";
 
                 recSet2.DoQuery(
-                    "select ORCT.DocEntry, avg(ORCT.TrsfrSum) as 'TrsfrSum' , SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
+                    "select ORCT.DocEntry, avg(ORCT.TrsfrSum) + avg(ORCT.CashSum) as 'TrsfrSum' , SUM(RCT2.AppliedFC) as 'AppliedFC' from ORCT inner join RCT2 on " +
                     "ORCT.DocEntry = RCT2.DocNum where ORCT.DocEntry in (" + orctDocEntrys +
                     ") group by ORCT.DocEntry");
                 // აქ მოგვაქვს ინფორმაცია გადახდების მიხედვით სრული თანხა LC - ში დოკუმენტის ნომერი და გადახდილი თანხა უცხოურ ვალუტაში
