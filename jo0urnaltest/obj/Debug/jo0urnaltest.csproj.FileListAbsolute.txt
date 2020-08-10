@@ -14,3 +14,6 @@ D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\bin
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.csprojResolveAssemblyReference.cache
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.exe
 D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.pdb
+C:\Users\nkurdadze\Desktop\dpm correction\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.exe.config
+C:\Users\nkurdadze\Desktop\dpm correction\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.exe
+C:\Users\nkurdadze\Desktop\dpm correction\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.pdb
