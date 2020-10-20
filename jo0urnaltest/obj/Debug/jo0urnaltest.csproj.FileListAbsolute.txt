@@ -17,3 +17,13 @@ D:\Users\nkurdadze\Desktop\JournalEntry\Down-Payment-Correction\jo0urnaltest\obj
 C:\Users\nkurdadze\Desktop\dpm correction\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.exe.config
 C:\Users\nkurdadze\Desktop\dpm correction\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.exe
 C:\Users\nkurdadze\Desktop\dpm correction\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.pdb
+C:\Users\blatsabidze\source\repos\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.exe.config
+C:\Users\blatsabidze\source\repos\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.exe
+C:\Users\blatsabidze\source\repos\Down-Payment-Correction\jo0urnaltest\bin\Debug\jo0urnaltest.pdb
+C:\Users\blatsabidze\source\repos\Down-Payment-Correction\jo0urnaltest\bin\Debug\Appocalypto.dll
+C:\Users\blatsabidze\source\repos\Down-Payment-Correction\jo0urnaltest\bin\Debug\DownPaymentLogic.dll
+C:\Users\blatsabidze\source\repos\Down-Payment-Correction\jo0urnaltest\bin\Debug\SAPBusinessOneSDK.dll
+C:\Users\blatsabidze\source\repos\Down-Payment-Correction\jo0urnaltest\bin\Debug\DownPaymentLogic.pdb
+C:\Users\blatsabidze\source\repos\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.exe
+C:\Users\blatsabidze\source\repos\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.pdb
+C:\Users\blatsabidze\source\repos\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.csprojResolveAssemblyReference.cache
