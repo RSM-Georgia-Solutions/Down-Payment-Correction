@@ -169,14 +169,28 @@ namespace jo0urnaltest
                 var txtRate = (SAPbouiCOM.EditText)(arInoviceForm.Items.Item("Item_0000").Specific);
                 DataForCalculationRate.RateInv = decimal.Parse(txtRate.Value.Replace(",", "."));
                 DataForCalculationRate.RateInv = decimal.Parse(UiManager.GetCurrencyRate(DataForCalculationRate.DocCurrency, docDate, Program._comp).ToString());
-                Matrix invMAtrix = (Matrix)arInoviceForm.Items.Item("38").Specific;
+                var item_serviceCombobox = (SAPbouiCOM.ComboBox)UIAPIRawForm.Items.Item("3").Specific;
+
+                var selected = item_serviceCombobox.Selected.Value;
+                Matrix invMAtrix;
+                string totalTaxAmountColumn = "";
+                if (selected == "S")
+                {
+                    invMAtrix = (Matrix)arInoviceForm.Items.Item("39").Specific;
+                    totalTaxAmountColumn = "33";
+                }
+                else
+                {
+                    invMAtrix = (Matrix)arInoviceForm.Items.Item("38").Specific;
+                    totalTaxAmountColumn = "83";
+                }
                 try
                 {
                     decimal taxTotalAmount = 0;
                     var vatFromTotalBefore = decimal.Parse(txtTotal);
                     for (int i = 1; i < invMAtrix.RowCount; i++)
                     {
-                        EditText txtMoney = (SAPbouiCOM.EditText)invMAtrix.Columns.Item("83").Cells.Item(i).Specific; //Tax Amount Line
+                        EditText txtMoney = (SAPbouiCOM.EditText)invMAtrix.Columns.Item(totalTaxAmountColumn).Cells.Item(i).Specific; //Tax Amount Line
                         decimal taxLineAmount = decimal.Parse(txtMoney.Value.Split(' ')[0]);
                         taxTotalAmount += taxLineAmount;
                     }
@@ -300,14 +314,29 @@ namespace jo0urnaltest
                 var txtRate = (SAPbouiCOM.EditText)(arInoviceForm.Items.Item("Item_0000").Specific);
                 DataForCalculationRate.RateInv = decimal.Parse(txtRate.Value.Replace(",", "."));
                 DataForCalculationRate.RateInv = decimal.Parse(UiManager.GetCurrencyRate(DataForCalculationRate.DocCurrency, docDate, Program._comp).ToString());
-                Matrix invMAtrix = (Matrix)arInoviceForm.Items.Item("38").Specific;
+                var item_serviceCombobox = (SAPbouiCOM.ComboBox)UIAPIRawForm.Items.Item("3").Specific;
+
+                var selected = item_serviceCombobox.Selected.Value;
+                Matrix invMAtrix;
+                string totalTaxAmountColumn = "";
+                if (selected == "S")
+                {
+                    invMAtrix = (Matrix)arInoviceForm.Items.Item("39").Specific;
+                    totalTaxAmountColumn = "33";
+                }
+                else
+                {
+                    invMAtrix = (Matrix)arInoviceForm.Items.Item("38").Specific;
+                    totalTaxAmountColumn = "83";
+                }
+
                 try
                 {
                     decimal taxTotalAmount = 0;
                     decimal vatFromTotalBefore = decimal.Parse(txtTotal);
                     for (int i = 1; i < invMAtrix.RowCount; i++)
                     {
-                        EditText txtMoney = (SAPbouiCOM.EditText)invMAtrix.Columns.Item("83").Cells.Item(i).Specific; //Tax Amount Line
+                        EditText txtMoney = (SAPbouiCOM.EditText)invMAtrix.Columns.Item(totalTaxAmountColumn).Cells.Item(i).Specific; //Tax Amount Line
                         decimal taxLineAmount = decimal.Parse(txtMoney.Value.Split(' ')[0]);
                         taxTotalAmount += taxLineAmount;
                     }
@@ -504,7 +533,7 @@ namespace jo0urnaltest
                     var vatFromTotalBefore = decimal.Parse(txtTotal);
                     for (int i = 1; i < invMAtrix.RowCount; i++)
                     {
-                        EditText txtMoney = (SAPbouiCOM.EditText)invMAtrix.Columns.Item("83").Cells.Item(i).Specific; //Tax Amount Line
+                        EditText txtMoney = (SAPbouiCOM.EditText)invMAtrix.Columns.Item("33").Cells.Item(i).Specific; //Tax Amount Line
                         decimal taxLineAmount = decimal.Parse(txtMoney.Value.Split(' ')[0]);
                         taxTotalAmount += taxLineAmount;
                     }

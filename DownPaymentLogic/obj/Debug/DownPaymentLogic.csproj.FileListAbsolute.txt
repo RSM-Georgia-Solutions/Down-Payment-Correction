@@ -21,3 +21,9 @@ C:\Users\gnatroshvili\Desktop\Down-Payment-Correction-master\DownPaymentLogic\bi
 C:\Users\gnatroshvili\Desktop\Down-Payment-Correction-master\DownPaymentLogic\obj\Debug\DownPaymentLogic.csprojResolveAssemblyReference.cache
 C:\Users\gnatroshvili\Desktop\Down-Payment-Correction-master\DownPaymentLogic\obj\Debug\DownPaymentLogic.dll
 C:\Users\gnatroshvili\Desktop\Down-Payment-Correction-master\DownPaymentLogic\obj\Debug\DownPaymentLogic.pdb
+C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\DownPaymentLogic\bin\Debug\DownPaymentLogic.dll
+C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\DownPaymentLogic\bin\Debug\DownPaymentLogic.pdb
+C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\DownPaymentLogic\bin\Debug\SAPBusinessOneSDK.dll
+C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\DownPaymentLogic\obj\Debug\DownPaymentLogic.csprojResolveAssemblyReference.cache
+C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\DownPaymentLogic\obj\Debug\DownPaymentLogic.dll
+C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\DownPaymentLogic\obj\Debug\DownPaymentLogic.pdb
