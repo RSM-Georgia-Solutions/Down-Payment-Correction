@@ -45,6 +45,10 @@
       <HintPath>..\packages\Appocalypto.1.1.0\lib\net452\Appocalypto.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="DownPaymentLogic, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\DownPaymentLogic\bin\Debug\DownPaymentLogic.dll</HintPath>
+    </Reference>
     <Reference Include="SAPApi">
       <HintPath>D:\Users\nkurdadze\Documents\Visual Studio 2015\Projects\RevServices_RS.GE\SAPApi\obj\Debug\SAPApi.dll</HintPath>
     </Reference>
@@ -101,12 +105,6 @@
     <Compile Include="Menu.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DownPaymentLogic\DownPaymentLogic.csproj">
-      <Project>{700d3573-f60c-4b18-8566-9411848db35e}</Project>
-      <Name>DownPaymentLogic</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />

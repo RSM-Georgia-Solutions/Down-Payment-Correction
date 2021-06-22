@@ -59,6 +59,4 @@ C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\jo0urnaltest\b
 C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\jo0urnaltest\bin\Debug\SAPApi.pdb
 C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.exe
 C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.pdb
-C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.csprojAssemblyReference.cache
-C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.csproj.CoreCompileInputs.cache
-C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.csproj.CopyComplete
+C:\Users\gnatroshvili\Desktop\downpayment\Down-Payment-Correction\jo0urnaltest\obj\Debug\jo0urnaltest.csprojResolveAssemblyReference.cache

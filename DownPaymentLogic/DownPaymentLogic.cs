@@ -700,7 +700,7 @@ namespace DownPaymentLogic
             {141, "18"}
         };
 
-        public static void CorrectionJournalEntryUI(SAPbobsCOM.Company _comp, int FormType, string businesPartnerCardCode, string applied, string docNumber, string bplName, string ExchangeGain, string ExchangeLoss, DateTime docDate)
+        public static void CorrectionJournalEntryUI(SAPbobsCOM.Company _comp, int FormType, string businesPartnerCardCode, string applied, string docNumber, string bplName, string glAccount, string ExchangeGain, string ExchangeLoss, DateTime docDate)
         {
 
             string vatAccountDownPayment = string.Empty;
@@ -794,13 +794,13 @@ namespace DownPaymentLogic
                 recSetNewAp.MoveNext();
             }
 
-            recSet.DoQuery(@"SELECT DebPayAcct, 
-            CRD3.AcctType,
-            CRD3.AcctCode
-                FROM OCRD
-                LEFT JOIN CRD3 ON OCRD.CardCode = CRD3.CardCode where OCRD.CardCode = '" + businesPartnerCardCode + "'");
+            //recSet.DoQuery(@"SELECT DebPayAcct, 
+            //CRD3.AcctType,
+            //CRD3.AcctCode
+            //    FROM OCRD
+            //    LEFT JOIN CRD3 ON OCRD.CardCode = CRD3.CardCode where OCRD.CardCode = '" + businesPartnerCardCode + "'");
 
-            string bpControlAcc = recSet.Fields.Item("DebPayAcct").Value.ToString();
+            string bpControlAcc = glAccount;
 
 
             while (!recSet.EoF)
@@ -941,14 +941,14 @@ namespace DownPaymentLogic
                         if (account == ExchangeGain)
                         {
                             AddJournalEntryDebitAr(_comp, bpControlAcc, ExchangeGain,
-                                Convert.ToDouble(receivibleCancellationAmountAr), series, docNumber, businesPartnerCardCode, docDate,
+                                Convert.ToDouble(exchangeRateAmount), series, docNumber, businesPartnerCardCode, docDate,
                                 bplID, vatGroupAndAccount.FirstOrDefault().Value, Convert.ToDouble(vatCencellationAmountGainAr), vatGroupAndAccount.FirstOrDefault().Key);
 
                         }
                         else if (account == ExchangeLoss)
                         {
                             AddJournalEntryCreditAr(_comp, bpControlAcc, ExchangeLoss,
-                                Convert.ToDouble(receivibleCancellationAmountAr), series, docNumber, businesPartnerCardCode, docDate,
+                                Convert.ToDouble(exchangeRateAmount), series, docNumber, businesPartnerCardCode, docDate,
                                 bplID, vatGroupAndAccount.FirstOrDefault().Value, Convert.ToDouble(vatCencellationAmountLossAr), vatGroupAndAccount.FirstOrDefault().Key);
                         }
 
@@ -958,13 +958,13 @@ namespace DownPaymentLogic
                         if (account == ExchangeGain)
                         {
                             AddJournalEntryCreditAp(_comp, bpControlAcc, ExchangeGain,
-                                Convert.ToDouble(receivibleCancellationAmountAp), series, docNumber, businesPartnerCardCode, docDate,
+                                Convert.ToDouble(exchangeRateAmount), series, docNumber, businesPartnerCardCode, docDate,
                                 bplID, vatGroupAndAccount.FirstOrDefault().Value, Convert.ToDouble(vatCencellationAmountGainAp), vatGroupAndAccount.FirstOrDefault().Key);
                         }
                         else if (account == ExchangeLoss)
                         {
                             AddJournalEntryDebitAp(_comp, ExchangeLoss, bpControlAcc,
-                                Convert.ToDouble(receivibleCancellationAmountAp), series, docNumber, businesPartnerCardCode, docDate, bplID,
+                                Convert.ToDouble(exchangeRateAmount), series, docNumber, businesPartnerCardCode, docDate, bplID,
                                  vatGroupAndAccount.FirstOrDefault().Value, Convert.ToDouble(vatCencellationAmountLossAp), vatGroupAndAccount.FirstOrDefault().Key);
                         }
                     }

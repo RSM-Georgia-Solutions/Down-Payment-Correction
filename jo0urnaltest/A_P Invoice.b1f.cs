@@ -210,6 +210,8 @@ namespace jo0urnaltest
             }
             try
             {
+                var glAccount = (SAPbouiCOM.EditText)(arInoviceForm.Items.Item("2010").Specific);
+                DataForCalculationRate.GlAccount = glAccount.Value;
                 DownPaymentLogic.DownPaymentLogic.ExchangeRateCorrectionUi(DataForCalculationRate, Program._comp);
 
             }
@@ -234,7 +236,7 @@ namespace jo0urnaltest
             if (pVal.ActionSuccess && !stop)
             {
                 DownPaymentLogic.DownPaymentLogic.CorrectionJournalEntryUI(Program._comp, 141, DataForCalculationRate.CardCode,
-                    DataForCalculationRate.DownPaymentAmount, DataForCalculationRate.DocNum, DataForCalculationRate.BplName, Program.ExchangeGain, Program.ExchangeLoss, DataForCalculationRate.PostingDate);
+                    DataForCalculationRate.DownPaymentAmount, DataForCalculationRate.DocNum, DataForCalculationRate.BplName, DataForCalculationRate.GlAccount, Program.ExchangeGain, Program.ExchangeLoss, DataForCalculationRate.PostingDate);
             }
 
         }
@@ -436,7 +438,7 @@ namespace jo0urnaltest
             if (pVal.ActionSuccess && !stop)
             {
                 DownPaymentLogic.DownPaymentLogic.CorrectionJournalEntryUI(Program._comp, 141, DataForCalculationRate.CardCode,
-                    DataForCalculationRate.DownPaymentAmount, DataForCalculationRate.DocNum, DataForCalculationRate.BplName, Program.ExchangeGain, Program.ExchangeLoss, DataForCalculationRate.PostingDate);
+                    DataForCalculationRate.DownPaymentAmount, DataForCalculationRate.DocNum, DataForCalculationRate.BplName, DataForCalculationRate.GlAccount, Program.ExchangeGain, Program.ExchangeLoss, DataForCalculationRate.PostingDate);
             }
         }
 
@@ -560,6 +562,8 @@ namespace jo0urnaltest
             }
             try
             {
+                var glAccount = (SAPbouiCOM.EditText)(arInoviceForm.Items.Item("2010").Specific);
+                DataForCalculationRate.GlAccount = glAccount.Value;
                 DownPaymentLogic.DownPaymentLogic.ExchangeRateCorrectionUi(DataForCalculationRate, Program._comp);
 
             }

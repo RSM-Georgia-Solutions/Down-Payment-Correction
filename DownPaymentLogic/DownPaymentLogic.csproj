@@ -50,7 +50,7 @@
   <ItemGroup>
     <Compile Include="Classes\DataForCalculationRate.cs" />
     <Compile Include="Classes\SharedClass.cs" />
-    <Compile Include="Classes\xContainer.cs" />
+    <Compile Include="xContainer.cs" />
     <Compile Include="DownPaymentLogic.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
